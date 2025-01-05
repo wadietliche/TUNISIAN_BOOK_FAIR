@@ -1,6 +1,6 @@
 from webapp import db
 from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author
-from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,BookSearchSchema, AuthorSearchSchema
+from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema
 from flask_smorest import abort
 from flask import request, jsonify 
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
@@ -8,7 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 from marshmallow import ValidationError
 from flask import jsonify
-
+from flask_jwt_extended import create_access_token, create_refresh_token
 
 
 def attendeeSignUp(attendee_data):  # Add the attendee_data parameter
@@ -52,8 +52,14 @@ def attendeeLogin(login_data):
         attendee = Attendee.query.filter_by(attendee_name=login_data['attendee_name']).first()
         
         if attendee and check_password_hash(attendee.password, login_data['password']):
-            return jsonify({"message": "Login successful", "attendee_id": attendee.attendee_id}), 200
-        
+
+            access_token= create_access_token(identity=attendee.attendee_name)
+            refresh_token=create_refresh_token(identity=attendee.attendee_name)
+            
+            return jsonify({"message": "Login successful", 
+                            "attendee_id": attendee.attendee_id,
+                            "tokens":{"access":access_token,
+                                      "refresh":refresh_token}}), 200        
         abort(401, message="Invalid credentials")
     except Exception as e:
         abort(500, message=f"An error occurred during login: {str(e)}")
@@ -74,38 +80,13 @@ def addFavoriteBook(favorite_book_data):
 
 
 
-def bookSearch(search_data):
-    title = search_data["title"]
-    response = requests.get("https://openlibrary.org/search.json", params={"title": title})
-        
+def combinedSearch(search_data):
+    # Fetch data from Open Library API
+    response = requests.get("https://openlibrary.org/search.json", params=search_data)
     if response.status_code != 200:
         return {"message": "Failed to fetch data from Open Library API."}, 500
 
-    books = [
-        {
-            "title": book.get("title"),
-            "author": ", ".join(book.get("author_name", [])),
-            "cover_image": f"https://covers.openlibrary.org/b/id/{book.get('cover_i')}-L.jpg" if book.get("cover_i") else None,
-            "publish_year": book.get("first_publish_year")
-            }
-        for book in response.json().get("docs", [])
-    ]
-
-    return {"books": books}
-
-
-
-
-def authorSearch(search_data):
-    author_name = search_data["author_name"]
-    base_url = "https://openlibrary.org/search.json"
-
-    # Fetch books by author
-    response = requests.get(base_url, params={"author": author_name})
-    if response.status_code != 200:
-        return {"message": "Failed to fetch author data from Open Library API."}, 500
-
-    books_data = response.json().get("docs", [])
+    # Parse and construct the book list
     books = [
         {
             "title": book.get("title"),
@@ -113,10 +94,11 @@ def authorSearch(search_data):
             "cover_image": f"https://covers.openlibrary.org/b/id/{book.get('cover_i')}-L.jpg" if book.get("cover_i") else None,
             "publish_year": book.get("first_publish_year"),
         }
-            for book in books_data
+        for book in response.json().get("docs", [])
     ]
 
-    return jsonify({"books": books})
+    # Return valid JSON
+    return {"books": books}
 
 
 

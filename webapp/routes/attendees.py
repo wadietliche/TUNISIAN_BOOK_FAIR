@@ -3,12 +3,12 @@ from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from webapp import db
 from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author
-from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,BookSearchSchema, AuthorSearchSchema
+from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,CombinedSearchSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 from flask import jsonify
 from webapp.Services import AttendeeServices
-
+from flask_jwt_extended import jwt_required
 
 
 attendee_bp = Blueprint("Attendees", "attendees", description="Operations on Attendees")
@@ -36,6 +36,7 @@ class AttendeeLogin(MethodView):
 
 # Add to Favorite Books (POST request to mark a book as favorite)
 @attendee_bp.route("/attendee/favorite/book")
+@jwt_required()
 class AddFavoriteBook(MethodView):
     @attendee_bp.arguments(FavoriteBookSchema)
     def post(self, favorite_book_data):
@@ -45,6 +46,7 @@ class AddFavoriteBook(MethodView):
 
 # Add to Favorite Authors (POST request to mark an author as favorite)
 attendee_bp.route("/attendee/favorite/author", methods=["POST"])
+@jwt_required()
 class AddFavoriteAuthor(MethodView):
     @attendee_bp.arguments(FavoriteAuthorSchema)
     def post(self, favorite_author_data):
@@ -54,6 +56,7 @@ class AddFavoriteAuthor(MethodView):
 
 # Check if Author is Attending (GET request to check if an author is attending an event)
 @attendee_bp.route("/attendee/author/<int:author_id>/attending")
+@jwt_required()
 class CheckAuthorAttendance(MethodView):
     def get(self, author_id):
        return AttendeeServices.checkAuthorAttendence(author_id)
@@ -62,6 +65,7 @@ class CheckAuthorAttendance(MethodView):
 
 # Attend an Event (POST request to mark attendance)
 @attendee_bp.route("/attendee/event/attend")
+@jwt_required()
 class AttendEvent(MethodView):
     @attendee_bp.arguments(EventAttendanceSchema)
     def post(self, attendance_data):
@@ -69,16 +73,21 @@ class AttendEvent(MethodView):
 
 
 # Book Search Route
-@attendee_bp.route("/attendee/search/book", methods=["GET"])
-class BookSearch(MethodView):
-    @attendee_bp.arguments(BookSearchSchema, location="query")
-    def get(self, search_data):
-        return AttendeeServices.bookSearch(search_data)
+@attendee_bp.route("/attendee/search")
+class CombinedSearch(MethodView):
+    """
+    Allows searching for books by both title and author name.
+    """
+    decorators = [jwt_required()]  # Apply decorators to the class
 
-
-# Author Search Route
-@attendee_bp.route("/attendee/search/author", methods=["GET"])
-class AuthorSearch(MethodView):
-    @attendee_bp.arguments(AuthorSearchSchema, location="query")
+    @attendee_bp.arguments(CombinedSearchSchema, location="query")
     def get(self, search_data):
-        return AttendeeServices.authorSearch(search_data)
+        # Use the service to process the search request
+        result = AttendeeServices.combinedSearch(search_data)
+
+        # Ensure the service returns a valid JSON response
+        if isinstance(result, tuple):  # Assuming error is returned as tuple (message, status)
+            return result  # Flask will handle the tuple as (response, status_code)
+
+        # If successful, return the result
+        return jsonify(result)  # Ensure response is in Flask's JSON format

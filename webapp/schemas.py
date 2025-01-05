@@ -52,11 +52,9 @@ class BookSchema(Schema):
     abstract = fields.Str()
     date_of_release = fields.Date()
 
-class BookSearchSchema(Schema):
-    title = fields.Str(required=True, error_messages={"required": "Title is required to search for a book."})
-
-class AuthorSearchSchema(Schema):
-    author_name = fields.Str(required=True, error_messages={"required": "Author name is required to search for books by the author."})
+class CombinedSearchSchema(Schema):
+    title = fields.String(required=False, description="Title of the book to search for.")
+    author_name = fields.String(required=False, description="Author name of the book to search for.")
 
 
 class ReservationRequestSchema(Schema):

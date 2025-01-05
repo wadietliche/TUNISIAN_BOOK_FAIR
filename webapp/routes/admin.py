@@ -1,9 +1,9 @@
 from flask.views import MethodView
 from flask_smorest import Blueprint
 from webapp.models import Admin, Author
-from webapp.schemas import AdminSchema
+from webapp.schemas import AdminSchema,AdminLoginSchema
 from webapp.Services import AdminServices
-
+from flask_jwt_extended import jwt_required
 
 
 # Create the Blueprint for Admin
@@ -11,8 +11,21 @@ admin_bp = Blueprint("Admins", "admins", description="Operations on Admins")
 
 
 
+
+
+# Attendee Login (POST request to authenticate)
+@admin_bp.route("/admin/login")
+class adminLogin(MethodView):
+    @admin_bp.arguments(AdminLoginSchema)
+    def post(self,login_data):
+        return AdminServices.adminLogin(login_data)
+
+
+
+
 # Admin resource for handling a specific admin by ID (GET and DELETE)
 @admin_bp.route("/admin/<int:admin_id>", methods=["GET", "DELETE"])
+@jwt_required()
 class AdminResource(MethodView):
     def get(self, admin_id):
         """Retrieve an admin by ID."""
@@ -27,7 +40,7 @@ class AdminResource(MethodView):
 
 # Admin resource for handling a list of admins (GET all) and creating new admin (POST)
 @admin_bp.route("/admin", methods=["GET", "POST"])
-
+@jwt_required()
 class AdminListResource(MethodView):
     def get(self):
         """Retrieve all admins."""
@@ -46,6 +59,7 @@ class AdminListResource(MethodView):
 
 
 @admin_bp.route("/admin/approve_author/<int:author_id>", methods=["POST"])
+@jwt_required()
 class AdminApproveAuthor(MethodView):
     def post(self, author_id):
         return AdminServices.approveAuthor()

@@ -8,6 +8,10 @@ class AdminSchema(Schema):
     admin_name = fields.Str(required=True)
     password = fields.Str(required=True)
 
+class AdminLoginSchema(Schema):
+    admin_name = fields.Str(required=True)  # Admin name is required
+    password = fields.Str(required=True)    # Password is required
+
 class AttendeeSchema(Schema):
     attendee_id = fields.Int(dump_only=True)
     attendee_name = fields.Str(required=True)

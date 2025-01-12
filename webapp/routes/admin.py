@@ -1,15 +1,25 @@
 from flask.views import MethodView
+from flask import jsonify,request
 from flask_smorest import Blueprint
 from webapp.models import Admin, Author
-from webapp.schemas import AdminSchema,AdminLoginSchema
+from webapp.schemas import AdminSchema,AdminLoginSchema,AuthorApprovalSchema
 from webapp.Services import AdminServices
 from flask_jwt_extended import jwt_required
+from marshmallow import ValidationError
 
 
 # Create the Blueprint for Admin
 admin_bp = Blueprint("Admins", "admins", description="Operations on Admins")
 
 
+@admin_bp.route("/create")
+class CreateAdmin(MethodView):
+    @admin_bp.arguments(AdminSchema)
+    def post(self, admin_data):
+        """
+        Endpoint to create a new admin.
+        """
+        return AdminServices.createNewAdmin(admin_data)
 
 
 
@@ -40,7 +50,7 @@ class AdminResource(MethodView):
 
 # Admin resource for handling a list of admins (GET all) and creating new admin (POST)
 @admin_bp.route("/admin", methods=["GET", "POST"])
-@jwt_required()
+#@jwt_required()
 class AdminListResource(MethodView):
     def get(self):
         """Retrieve all admins."""
@@ -58,8 +68,15 @@ class AdminListResource(MethodView):
 
 
 
-@admin_bp.route("/admin/approve_author/<int:author_id>", methods=["POST"])
-@jwt_required()
+
 class AdminApproveAuthor(MethodView):
+    @jwt_required()
     def post(self, author_id):
-        return AdminServices.approveAuthor()
+        # Call the service method that handles approving the author
+        response = AdminServices.approveAuthor(author_id)
+        
+        # Return the response as JSON with the appropriate HTTP status code
+        return jsonify(response[0]), response[1]
+
+# Register the AdminApproveAuthor method view with the blueprint
+admin_bp.add_url_rule('/admin/approve_author/<int:author_id>', view_func=AdminApproveAuthor.as_view('approve_author'))

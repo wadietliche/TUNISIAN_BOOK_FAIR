@@ -11,6 +11,33 @@ from flask import jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 
+@staticmethod
+def generate_random_password(length=12):
+    """Generate a random password."""
+    import random
+    import string
+    characters = string.ascii_letters + string.digits + string.punctuation
+    return ''.join(random.choice(characters) for _ in range(length))
+
+@staticmethod
+def fetch_author_from_google_books(author_name):
+    """Fetch author details from Google Books API."""
+    import requests
+    GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes"
+    params = {
+        "q": f"inauthor:{author_name}",
+        "key": "AIzaSyCcdNKnm3UL-UK2ykcMoHMvwCmoyhHCkoo" 
+    }
+    response = requests.get(GOOGLE_BOOKS_API_URL, params=params)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if data.get("items"):
+            return data["items"][0]["volumeInfo"]["authors"][0]  # First author
+    return None
+
+
+
 def attendeeSignUp(attendee_data):  # Add the attendee_data parameter
     try:
         # Check if the attendee_name already exists in the database
@@ -80,53 +107,112 @@ def addFavoriteBook(favorite_book_data):
 
 
 
-def combinedSearch(search_data):
-    # Fetch data from Open Library API
-    response = requests.get("https://openlibrary.org/search.json", params=search_data)
-    if response.status_code != 200:
-        return {"message": "Failed to fetch data from Open Library API."}, 500
+from flask import current_app
 
-    # Parse and construct the book list
-    books = [
-        {
-            "title": book.get("title"),
-            "author": ", ".join(book.get("author_name", [])),
-            "cover_image": f"https://covers.openlibrary.org/b/id/{book.get('cover_i')}-L.jpg" if book.get("cover_i") else None,
-            "publish_year": book.get("first_publish_year"),
-        }
-        for book in response.json().get("docs", [])
-    ]
+def combinedSearch(query, max_results=5):
+    # Prepare the query string to search in title, author, or publisher
+    search_url = f'https://www.googleapis.com/books/v1/volumes?q={query}&maxResults={max_results}&key=AIzaSyCcdNKnm3UL-UK2ykcMoHMvwCmoyhHCkoo'
 
-    # Return valid JSON
-    return {"books": books}
-
-
-
-
-def addFavoriteAuthor(favorite_author_data):
-    # Extract the author name from the incoming request data
-    author_name = favorite_author_data['author_name']
-    attendee_id = favorite_author_data['attendee_id']
-        
-    # Search for the author by name
-    author = Author.query.filter_by(author_name=author_name).first()
-        
-    if not author:
-        # Return an error if the author is not found
-        return {"message": "Author not found."}, 404
-        
-    # Create a new FavoriteAuthor entry linking the attendee to the author
-    favorite_author = FavoriteAuthor(author_id=author.author_id, attendee_id=attendee_id)
-        
+    # Perform the request to the Google Books API
     try:
-        # Add the new favorite author to the session and commit
+        response = requests.get(search_url)
+        response.raise_for_status()  # Will raise an exception for 4xx or 5xx responses
+        data = response.json()
+
+        # If the response contains items (books)
+        if 'items' in data:
+            books = []
+            for item in data['items']:
+                book_info = item.get('volumeInfo', {})
+                books.append({
+                    'title': book_info.get('title', 'N/A'),
+                    'authors': book_info.get('authors', ['N/A']),
+                    'publisher': book_info.get('publisher', 'N/A'),
+                    'publishedDate': book_info.get('publishedDate', 'N/A'),
+                    'description': book_info.get('description', 'No description available'),
+                    'isbn': next((identifier['identifier'] for identifier in book_info.get('industryIdentifiers', []) if identifier['type'] == 'ISBN_13'), 'N/A'),
+                    'imageLinks': book_info.get('imageLinks', {}).get('thumbnail', 'N/A'),
+                    'previewLink': book_info.get('infoLink', 'N/A')
+                })
+            return jsonify(books)  # Return the list of books in JSON format
+        else:
+            return jsonify({"message": "No books found matching the query."})
+
+    except requests.exceptions.RequestException as e:
+        # Handle any errors in the request (e.g., network issues)
+        return jsonify({"error": str(e)})
+
+
+
+
+
+def add_favorite_author(favorite_author_data):
+    try:
+        # Extract attendee ID and author name from the input
+        attendee_id = favorite_author_data['attendee_id']
+        author_name = favorite_author_data['author_name']
+
+        # Check if the author already exists in the database
+        author = Author.query.filter_by(author_name=author_name).first()
+
+        if not author:
+            # If the author doesn't exist, fetch author details from Google Books API
+            fetched_author_name = fetch_author_from_google_books(author_name)
+
+            if not fetched_author_name:
+                return {"message": "Author not found in Google Books API."}, 404
+
+            # Generate a random password for the new author entry
+            random_password = generate_random_password()
+            print(f"Generated password for author '{fetched_author_name}': {random_password}")
+
+            # Generate a unique username (avoid duplicating usernames)
+            base_username = fetched_author_name.replace(" ", "_").lower()
+            username = base_username
+            counter = 1
+
+            # Check if the username already exists in the database
+            while Author.query.filter_by(username=username).first():
+                username = f"{base_username}_{counter}"
+                counter += 1
+
+            # Add the new author to the database
+            author = Author(
+                author_name=fetched_author_name,
+                username=username,
+                password=random_password,
+                approved=False
+            )
+            db.session.add(author)
+            db.session.commit()  # Save the new author to the database
+            print(f"New author created: {author}")
+
+        # Check if the author is already in the attendee's favorites
+        existing_favorite = FavoriteAuthor.query.filter_by(author_id=author.author_id, attendee_id=attendee_id).first()
+
+        if existing_favorite:
+            # If the author is already in the favorite list, return a message
+            return {"message": "This author is already in your favorites."}, 400
+
+        # Create a new favorite author entry if the author is not already in the favorites
+        favorite_author = FavoriteAuthor(author_id=author.author_id, attendee_id=attendee_id)
         db.session.add(favorite_author)
         db.session.commit()
-        return {"message": "Author added to favorites."}, 201
-    except SQLAlchemyError:
-        # Handle any SQLAlchemy errors, such as database issues
-        db.session.rollback()
-        return {"message": "An error occurred while adding the author to favorites."}, 500
+
+        print(f"Successfully added author '{author.author_name}' to favorites.")
+        return {"message": "Author added to favorites successfully."}, 201
+
+    except ValidationError as ve:
+        return {"message": "Invalid data.", "errors": ve.messages}, 422
+
+    except SQLAlchemyError as se:
+        db.session.rollback()  # Rollback on any database error
+        return {"message": f"Database error: {str(se)}"}, 500
+
+    except Exception as e:
+        return {"message": f"Unexpected error: {str(e)}"}, 500
+
+
     
 
 

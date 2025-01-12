@@ -1,7 +1,5 @@
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, validate
 
-
-from marshmallow import Schema, fields
 
 class AdminSchema(Schema):
     admin_id = fields.Int(dump_only=True)  
@@ -22,17 +20,16 @@ class AttendeeLoginSchema(Schema):
     password = fields.Str(required=True)
 
 class FavoriteAuthorSchema(Schema):
-    author_name = fields.Str(required=True)  
-    attendee_id = fields.Int(dump_only=True)
+    favorite_author_id = fields.Int(dump_only=True)
+    author_name = fields.Str(required=True)  # Expecting a string name
+    attendee_id = fields.Int(required=True)
 
 
 class FavoriteBookSchema(Schema):
     book_id = fields.Int(required=True)
     attendee_id = fields.Int(dump_only=True)
 
-class FavoriteAuthorSchema(Schema):
-    author_id = fields.Int(required=True)
-    attendee_id = fields.Int(dump_only=True)
+
 
 class EventAttendanceSchema(Schema):
     event_id = fields.Int(required=True)
@@ -47,7 +44,7 @@ class AuthorSchema(Schema):
 # Schema to handle login data for authors
 class AuthorLoginSchema(Schema):
     username = fields.Str(required=True)    # Author's unique username
-    password = fields.Str(required=True)    # Author's password
+    password = fields.Str(required=True,validate=validate.Length(min=1))    # Author's password
 
 # Schema to handle book data
 class BookSchema(Schema):
@@ -64,3 +61,6 @@ class CombinedSearchSchema(Schema):
 class ReservationRequestSchema(Schema):
     author_id = fields.Int(required=True)
     event_id = fields.Int(required=True)
+
+class AuthorApprovalSchema(Schema):
+    approve = fields.Bool(required=True, error_messages={"required": "Approval flag is required."})

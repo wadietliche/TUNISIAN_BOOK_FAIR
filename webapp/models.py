@@ -17,12 +17,11 @@ class Attendee(db.Model):
     attendee_name = db.Column(db.String(50), nullable=False)
     password = db.Column(db.String(255), nullable=False)
     favorite_books = db.relationship('FavoriteBook', backref='attendee', lazy=True)
-    favorite_authors = db.relationship('FavoriteAuthor', backref='attendee', lazy=True)
+    favorite_authors = db.relationship('FavoriteAuthor', back_populates='attendee', lazy=True)  # Use back_populates here
 
 
 # Authors Table
-from webapp import db
-
+# Authors Table
 class Author(db.Model):
     __tablename__ = 'authors'
     
@@ -35,7 +34,7 @@ class Author(db.Model):
     books = db.relationship('Book', backref='author', lazy=True)
     fair_maps = db.relationship('FairMap', backref='author', lazy=True)
     present_events = db.relationship('PresentEvent', backref='author', lazy=True)
-
+    favorite_authors = db.relationship('FavoriteAuthor', back_populates='author')
 
 # Books Table
 class Book(db.Model):
@@ -67,11 +66,6 @@ class FavoriteBook(db.Model):
     attendee_id = db.Column(db.Integer, db.ForeignKey('attendees.attendee_id'), primary_key=True)
 
 
-# FavoriteAuthors Table (Linking Authors and Attendees)
-class FavoriteAuthor(db.Model):
-    __tablename__ = 'favorite_authors'
-    author_id = db.Column(db.Integer, db.ForeignKey('authors.author_id'), primary_key=True)
-    attendee_id = db.Column(db.Integer, db.ForeignKey('attendees.attendee_id'), primary_key=True)
 
 
 # FairMap Table (Booth References for Authors)
@@ -86,3 +80,16 @@ class PresentEvent(db.Model):
     __tablename__ = 'present_event'
     author_id = db.Column(db.Integer, db.ForeignKey('authors.author_id'), primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('events.event_id'), primary_key=True)
+
+
+
+
+class FavoriteAuthor(db.Model):
+    __tablename__ = 'favorite_authors'
+    favorite_author_id = db.Column(db.Integer, primary_key=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('authors.author_id'), nullable=False)
+    attendee_id = db.Column(db.Integer, db.ForeignKey('attendees.attendee_id'), nullable=False)
+
+    # Define the reverse relationship using back_populates
+    attendee = db.relationship('Attendee', back_populates='favorite_authors')
+    author = db.relationship('Author', back_populates='favorite_authors')  # Ensure the Author model has a matching back_populates

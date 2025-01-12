@@ -6,7 +6,7 @@ from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, 
 from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,CombinedSearchSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
-from flask import jsonify
+from flask import jsonify,Response
 from webapp.Services import AttendeeServices
 from flask_jwt_extended import jwt_required
 
@@ -44,13 +44,12 @@ class AddFavoriteBook(MethodView):
 
 
 
-# Add to Favorite Authors (POST request to mark an author as favorite)
-attendee_bp.route("/attendee/favorite/author", methods=["POST"])
-@jwt_required()
+@attendee_bp.route("/attendee/favorite/author", methods=["POST"])
 class AddFavoriteAuthor(MethodView):
     @attendee_bp.arguments(FavoriteAuthorSchema)
     def post(self, favorite_author_data):
-       return AttendeeServices.addFavoriteAuthor(favorite_author_data)
+        return AttendeeServices.add_favorite_author(favorite_author_data)
+
 
 
 
@@ -85,9 +84,13 @@ class CombinedSearch(MethodView):
         # Use the service to process the search request
         result = AttendeeServices.combinedSearch(search_data)
 
-        # Ensure the service returns a valid JSON response
-        if isinstance(result, tuple):  # Assuming error is returned as tuple (message, status)
-            return result  # Flask will handle the tuple as (response, status_code)
+        # Check if the result is a Response object (error or valid response)
+        if isinstance(result, Response):
+            return result  # Return the existing Response object
 
-        # If successful, return the result
+        # If the result is not a Response, jsonify it before returning
         return jsonify(result)  # Ensure response is in Flask's JSON format
+    
+
+
+#Book recommendation 

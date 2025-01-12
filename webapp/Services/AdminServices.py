@@ -34,7 +34,10 @@ def createNewAdmin(admin_data):
         
         return jsonify({
             "message": "Admin created successfully.",
-            "admin": admin_schema.dump(admin)
+            "admin": {
+                "admin_id": admin.admin_id,
+                "admin_name": admin.admin_name
+            }
         }), 201
 
     except IntegrityError:
@@ -116,9 +119,22 @@ def returnAllAdmins():
 
 
 
-def approveAuthor(author_id):
+"""def approveAuthor(author_id):
     author = Author.query.get_or_404(author_id)
     # Approve the author
     author.approved = True
     db.session.commit()
+    return jsonify({"message": f"Author {author.author_name} has been approved."}), 200"""
+
+def approveAuthor(author_id):
+    # Query the author by their ID, if not found, an error will be raised
+    author = Author.query.get_or_404(author_id)
+    
+    # Set the 'approved' flag to True to approve the author
+    author.approved = True
+    
+    # Commit the changes to the database
+    db.session.commit()
+
+    # Return a success message and HTTP status code 200 (OK)
     return {"message": f"Author {author.author_name} has been approved."}, 200

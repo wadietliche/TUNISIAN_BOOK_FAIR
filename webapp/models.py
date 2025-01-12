@@ -31,20 +31,35 @@ class Author(db.Model):
     password = db.Column(db.String(255), nullable=False)
     approved = db.Column(db.Boolean, default=False)  
 
-    books = db.relationship('Book', backref='author', lazy=True)
+    # backref 'books' in Author model remains
+    books = db.relationship('Book', backref='author_relation', lazy=True)  # Changed 'author' to 'author_relation'
     fair_maps = db.relationship('FairMap', backref='author', lazy=True)
     present_events = db.relationship('PresentEvent', backref='author', lazy=True)
     favorite_authors = db.relationship('FavoriteAuthor', back_populates='author')
 
+
+
+
 # Books Table
 class Book(db.Model):
     __tablename__ = 'books'
+    
     book_id = db.Column(db.Integer, primary_key=True)
-    book_name = db.Column(db.String(100), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    isbn = db.Column(db.String(50), unique=True, nullable=False)
+    published_year = db.Column(db.Integer)
+    publisher = db.Column(db.String(100))
+    
+    # Foreign key linking to Author
     author_id = db.Column(db.Integer, db.ForeignKey('authors.author_id'), nullable=False)
-    abstract = db.Column(db.Text, nullable=True)
-    date_of_release = db.Column(db.Date, nullable=True)
-    favorite_books = db.relationship('FavoriteBook', backref='book', lazy=True)
+    
+    # Use a unique backref name
+    author = db.relationship('Author', backref=db.backref('author_books', lazy=True))  # Changed to 'author_books'
+
+
+
+
+
 
 
 # Events Table

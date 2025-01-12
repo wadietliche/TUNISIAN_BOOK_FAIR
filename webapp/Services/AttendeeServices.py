@@ -1,5 +1,5 @@
 from webapp import db
-from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author
+from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author, Book
 from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema
 from flask_smorest import abort
 from flask import request, jsonify 
@@ -9,6 +9,56 @@ import requests
 from marshmallow import ValidationError
 from flask import jsonify
 from flask_jwt_extended import create_access_token, create_refresh_token
+
+
+
+
+
+import requests
+
+def fetch_book_from_google_books(book_title):
+    try:
+        response = requests.get(
+            f"https://www.googleapis.com/books/v1/volumes?q=intitle:{book_title}&key=AIzaSyCcdNKnm3UL-UK2ykcMoHMvwCmoyhHCkoo"
+        )
+        response_data = response.json()
+
+        # Log the entire response
+        print(f"Full API Response for '{book_title}': {response_data}")
+
+        if "items" not in response_data:
+            print(f"No items found for book title: {book_title}")
+            return None
+
+        book_data = response_data["items"][0]["volumeInfo"]
+        print(f"Book data extracted: {book_data}")
+
+        title = book_data.get("title")
+        isbn_info = next(
+            (identifier["identifier"] for identifier in book_data.get("industryIdentifiers", []) if identifier["type"] == "ISBN_13"),
+            None
+        )
+        published_year = book_data.get("publishedDate", "").split("-")[0]
+        publisher = book_data.get("publisher", "Unknown Publisher")
+        author_name = book_data.get("authors", ["Unknown Author"])[0]
+
+        return {
+            "title": title,
+            "isbn": isbn_info,
+            "published_year": int(published_year) if published_year.isdigit() else None,
+            "publisher": publisher,
+            "author_name": author_name,
+        }
+    except Exception as e:
+        print(f"Error fetching book: {e}")
+        return None
+
+
+
+
+
+
+
 
 
 @staticmethod
@@ -94,15 +144,92 @@ def attendeeLogin(login_data):
 
 
 
-def addFavoriteBook(favorite_book_data):
-    favorite_book = FavoriteBook(**favorite_book_data)
+def add_favorite_book(favorite_book_data):
     try:
+        # Extract attendee ID and book title from the input
+        attendee_id = favorite_book_data['attendee_id']
+        book_title = favorite_book_data['book_title']
+
+        # Check if the book already exists in the database
+        book = Book.query.filter_by(title=book_title).first()
+
+        if not book:
+            # If the book doesn't exist, fetch book details from Google Books API
+            fetched_book_details = fetch_book_from_google_books(book_title)
+
+            if not fetched_book_details:
+                return {"message": "Book not found in Google Books API."}, 404
+            if not fetched_book_details["isbn"]:
+                return {"message": "ISBN not found for this book in Google Books API."}, 404
+
+            # Extract book details from the fetched data
+            fetched_title = fetched_book_details['title']
+            fetched_isbn = fetched_book_details['isbn']
+            fetched_published_year = fetched_book_details.get('published_year')
+            fetched_publisher = fetched_book_details.get('publisher')
+            fetched_author_name = fetched_book_details['author_name']
+
+            # Check if the author exists in the database
+            author = Author.query.filter_by(author_name=fetched_author_name).first()
+
+            if not author:
+                # Add the author to the database if they don't exist
+                random_password = generate_random_password()
+                print(f"Generated password for author '{fetched_author_name}': {random_password}")
+
+                base_username = fetched_author_name.replace(" ", "_").lower()
+                username = base_username
+                counter = 1
+
+                while Author.query.filter_by(username=username).first():
+                    username = f"{base_username}_{counter}"
+                    counter += 1
+
+                author = Author(
+                    author_name=fetched_author_name,
+                    username=username,
+                    password=random_password,
+                    approved=False
+                )
+                db.session.add(author)
+                db.session.commit()
+                print(f"New author created: {author}")
+
+            # Add the book to the database
+            book = Book(
+                title=fetched_title,
+                isbn=fetched_isbn,
+                published_year=fetched_published_year,
+                publisher=fetched_publisher,
+                author_id=author.author_id
+            )
+            db.session.add(book)
+            db.session.commit()
+            print(f"New book added: {book}")
+
+        # Check if the book is already in the attendee's favorites
+        existing_favorite = FavoriteBook.query.filter_by(book_id=book.book_id, attendee_id=attendee_id).first()
+
+        if existing_favorite:
+            return {"message": "This book is already in your favorites."}, 400
+
+        # Add the book to the favorite books table
+        favorite_book = FavoriteBook(book_id=book.book_id, attendee_id=attendee_id)
         db.session.add(favorite_book)
         db.session.commit()
-        return {"message": "Book added to favorites."}, 201
-    except SQLAlchemyError:
+
+        print(f"Successfully added book '{book.title}' to favorites.")
+        return {"message": "Book added to favorites successfully."}, 201
+
+    except ValidationError as ve:
+        return {"message": "Invalid data.", "errors": ve.messages}, 422
+
+    except SQLAlchemyError as se:
         db.session.rollback()
-        abort(500, message="An error occurred while adding the book.")
+        return {"message": f"Database error: {str(se)}"}, 500
+
+    except Exception as e:
+        return {"message": f"Unexpected error: {str(e)}"}, 500
 
 
 

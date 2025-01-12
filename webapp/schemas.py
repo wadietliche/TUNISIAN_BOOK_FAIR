@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields, validate
+from marshmallow import Schema, fields, validate, ValidationError
 
 
 class AdminSchema(Schema):
@@ -25,9 +25,26 @@ class FavoriteAuthorSchema(Schema):
     attendee_id = fields.Int(required=True)
 
 
+from marshmallow import Schema, fields, validates, ValidationError
+
 class FavoriteBookSchema(Schema):
-    book_id = fields.Int(required=True)
-    attendee_id = fields.Int(dump_only=True)
+    attendee_id = fields.Int(required=True, error_messages={"required": "Attendee ID is required."})
+    book_title = fields.Str(
+        required=True,
+        validate=lambda x: len(x) > 0,
+        error_messages={"required": "Book title is required.", "validator_failed": "Book title must not be empty."}
+    )
+
+    @validates("attendee_id")
+    def validate_attendee_id(self, value):
+        if value <= 0:
+            raise ValidationError("Attendee ID must be a positive integer.")
+
+    @validates("book_title")
+    def validate_book_title(self, value):
+        if not value.strip():
+            raise ValidationError("Book title must not be empty or whitespace.")
+
 
 
 
@@ -48,10 +65,12 @@ class AuthorLoginSchema(Schema):
 
 # Schema to handle book data
 class BookSchema(Schema):
-    book_name = fields.Str(required=True)
+    book_id = fields.Int(dump_only=True)
+    isbn = fields.Str(required=True)  # Add ISBN as a required field
+    title = fields.Str(required=True)
     author_id = fields.Int(required=True)
-    abstract = fields.Str()
-    date_of_release = fields.Date()
+    published_year = fields.Int()
+    publisher = fields.Str()
 
 class CombinedSearchSchema(Schema):
     title = fields.String(required=False, description="Title of the book to search for.")

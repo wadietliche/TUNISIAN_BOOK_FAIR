@@ -36,11 +36,10 @@ class AttendeeLogin(MethodView):
 
 # Add to Favorite Books (POST request to mark a book as favorite)
 @attendee_bp.route("/attendee/favorite/book")
-@jwt_required()
 class AddFavoriteBook(MethodView):
     @attendee_bp.arguments(FavoriteBookSchema)
     def post(self, favorite_book_data):
-        return AttendeeServices.addFavoriteBook(favorite_book_data)
+        return AttendeeServices.add_favorite_book(favorite_book_data)
 
 
 

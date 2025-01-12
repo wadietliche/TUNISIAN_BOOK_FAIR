@@ -87,7 +87,7 @@ def authorLogin(login_data):
 def addBookByAuthor(book_data):
     """Add a new book to the system."""
     author_id = book_data['author_id']
-    book_name = book_data['book_name']
+    title= book_data['title']
     
     author = Author.query.get(author_id)
     if not author:

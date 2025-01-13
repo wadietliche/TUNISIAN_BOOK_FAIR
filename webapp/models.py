@@ -88,6 +88,7 @@ class FairMap(db.Model):
     __tablename__ = 'fair_map'
     booth_reference = db.Column(db.String(50), primary_key=True)
     author_id = db.Column(db.Integer, db.ForeignKey('authors.author_id'), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='pending')  # 'pending', 'approved'
 
 
 # PresentEvent Table (Linking Authors and Events)

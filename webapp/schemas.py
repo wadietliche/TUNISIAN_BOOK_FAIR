@@ -79,10 +79,6 @@ class CombinedSearchSchema(Schema):
     author_name = fields.String(required=False, description="Author name of the book to search for.")
 
 
-class ReservationRequestSchema(Schema):
-    author_id = fields.Int(required=True)
-    event_id = fields.Int(required=True)
-
 
 class AuthorApprovalSchema(Schema):
     approve = fields.Bool(required=True, error_messages={"required": "Approval flag is required."})
@@ -96,6 +92,11 @@ class RecommendationResponseSchema(Schema):
     recommended_books = fields.List(fields.Nested(BookSchema)) 
 
 
+
+class FairMapSchema(Schema):
+    booth_reference = fields.String(required=False)  # Optional during request creation
+    author_id = fields.Integer(required=True)  # Required to link to the author
+    status = fields.String(required=False, dump_only=True)  # Read-only, defaults to 'pending'
 
 
 class EventSchema(Schema):
@@ -118,3 +119,27 @@ class EventSchema(Schema):
             datetime.strptime(value, "%H:%M:%S").time()
         except ValueError:
             raise ValidationError("Not a valid time. Expected format: HH:MM:SS.")
+        
+
+class FairMapSchema2(Schema):
+    booth_reference = fields.String(
+        required=True, 
+        validate=validate.Length(max=50), 
+        error_messages={"required": "Booth reference is required."}
+    )
+    author_id = fields.Integer(
+        required=True, 
+        error_messages={"required": "Author ID is required."}
+    )
+    status = fields.String(
+        required=True,
+        validate=validate.OneOf(["pending", "approved"]),
+        error_messages={
+            "required": "Status is required.",
+            "invalid": "Status must be 'pending' or 'approved'."
+        }
+    )
+
+class ReservationRequestSchema(Schema): 
+    author_id = fields.Int(required=True)
+    event_id = fields.Int(required=False)

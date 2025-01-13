@@ -7,8 +7,8 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 import logging
 from datetime import datetime
 from webapp import db
-from webapp.models import Admin, Author, Event
-from webapp.schemas import AdminSchema, AdminLoginSchema, EventSchema
+from webapp.models import Admin, Author, Event, FairMap
+from webapp.schemas import AdminSchema, AdminLoginSchema, EventSchema, FairMapSchema2
 
 
 
@@ -161,3 +161,58 @@ def create_event(event_data):
         except Exception as e:
             db.session.rollback()
             return {"message": str(e)}, 500
+        
+
+
+
+def approve_and_assign_booth(author_id, booth_reference):
+    fair_map_schema = FairMapSchema2()
+    try:
+        # Validate the input using the schema
+        data = {"author_id": author_id, "booth_reference": booth_reference, "status": "approved"}
+        validated_data = fair_map_schema.load(data)
+
+        # Fetch the booth request for the given author_id
+        booth_request = FairMap.query.filter_by(author_id=validated_data["author_id"]).first()
+
+        if not booth_request:
+            return jsonify({
+                "message": "No booth request found for this author."
+            }), 404
+
+        if booth_request.status == 'approved':
+            return jsonify({
+                "message": "This request has already been approved.",
+                "booth_reference": booth_request.booth_reference
+            }), 200
+
+        # Check if the booth_reference is already assigned
+        existing_booth = FairMap.query.filter_by(booth_reference=validated_data["booth_reference"]).first()
+        if existing_booth:
+            return jsonify({
+                "message": f"The booth '{validated_data['booth_reference']}' is already assigned to another author."
+            }), 400
+
+        # Approve the request and assign the booth
+        booth_request.status = validated_data["status"]
+        booth_request.booth_reference = validated_data["booth_reference"]
+        db.session.commit()
+
+        return jsonify({
+            "message": "The request has been approved and the booth has been assigned.",
+            "author_id": booth_request.author_id,
+            "booth_reference": booth_request.booth_reference
+        }), 200
+
+    except ValidationError as ve:
+        # Handle validation errors
+        return jsonify({
+            "error": "Validation error",
+            "details": ve.messages
+        }), 400
+
+    except Exception as e:
+        # Handle unexpected errors
+        return jsonify({
+            "error": str(e)
+        }), 500

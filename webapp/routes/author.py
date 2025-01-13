@@ -48,11 +48,11 @@ author_bp.add_url_rule("/author/book", view_func=AddBook.as_view('add_book'))
 
 
 # Route to send a reservation request for an event
-@author_bp.route("/author/reservation", methods=["POST"])
+"""@author_bp.route("/author/reservation", methods=["POST"])
 @jwt_required()
 class ReservationRequest(MethodView):
     def post(self):
-        return AuthorSercices.reservationRequest()
+        return AuthorSercices.reservationRequest()"""
     
 
 
@@ -60,3 +60,7 @@ class ReservationRequest(MethodView):
 class Event(MethodView):
     def get(self):
         return AuthorSercices.get_all_events()
+    
+    @author_bp.arguments(ReservationRequestSchema)
+    def post(self, request_data):
+        return AuthorSercices.post_booth_request(request_data)

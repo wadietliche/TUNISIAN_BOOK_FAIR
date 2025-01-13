@@ -90,3 +90,25 @@ class CreateEvent(MethodView):
     @admin_bp.arguments(EventSchema)  # Automatically validate incoming JSON data
     def post(self, event_data):
         return AdminServices.create_event(event_data)
+    
+
+
+
+@admin_bp.route("/admin/author/booth", methods=["PUT"])
+class ApproveBoothRequest(MethodView):
+    def put(self):
+        try:
+            # Extract the request data
+            data = request.json
+            author_id = data.get('author_id')
+            booth_reference = data.get('booth_reference')
+
+            if not author_id or not booth_reference:
+                return jsonify({
+                    "message": "Both author_id and booth_reference are required."
+                }), 400
+
+            # Call the service function
+            return AdminServices.approve_and_assign_booth(author_id, booth_reference)
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500

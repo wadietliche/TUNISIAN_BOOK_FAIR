@@ -3,11 +3,11 @@ from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from webapp import db
 from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author
-from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,CombinedSearchSchema
+from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,CombinedSearchSchema,RecommendationResponseSchema,RecommendationRequestSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 from flask import jsonify,Response
-from webapp.Services import AttendeeServices
+from webapp.Services import AttendeeServices, RecommendationServices
 from flask_jwt_extended import jwt_required
 
 
@@ -93,3 +93,10 @@ class CombinedSearch(MethodView):
 
 
 #Book recommendation 
+@attendee_bp.route("/attendee/recommend")
+class RecommendBooks(MethodView):
+    @attendee_bp.arguments(RecommendationRequestSchema)
+    @attendee_bp.response(200, RecommendationResponseSchema)
+    def post(self, attendee_data):
+       return RecommendationServices.recommend_books_for_attendee(attendee_data)
+    

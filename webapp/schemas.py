@@ -83,3 +83,11 @@ class ReservationRequestSchema(Schema):
 
 class AuthorApprovalSchema(Schema):
     approve = fields.Bool(required=True, error_messages={"required": "Approval flag is required."})
+
+
+
+class RecommendationRequestSchema(Schema):
+    attendee_id = fields.Int(required=True)
+
+class RecommendationResponseSchema(Schema):
+    recommended_books = fields.List(fields.Nested(BookSchema)) 

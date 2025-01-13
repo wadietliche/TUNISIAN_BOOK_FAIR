@@ -102,10 +102,15 @@ class RecommendBooks(MethodView):
     
 
 
-@attendee_bp.route("/attendee/event/<int:event_id>", methods=["GET"])
+@attendee_bp.route("/attendee/event/<int:event_id>", methods=["GET","POST","PUT"])
 class EventInfo(MethodView):
     def get(self, event_id):
         return AttendeeServices.getEventInfo(event_id)
+    
+    def post(self, event_id):
+        return AttendeeServices.ConfirmAttendence(event_id)
+    def put(self,event_id):
+        return AttendeeServices.giveFeedback(event_id)
 
 
 

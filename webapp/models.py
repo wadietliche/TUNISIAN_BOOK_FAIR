@@ -94,8 +94,10 @@ class FairMap(db.Model):
 # PresentEvent Table (Linking Authors and Events)
 class PresentEvent(db.Model):
     __tablename__ = 'present_event'
+    
     author_id = db.Column(db.Integer, db.ForeignKey('authors.author_id'), primary_key=True)
     event_id = db.Column(db.Integer, db.ForeignKey('events.event_id'), primary_key=True)
+    feedback = db.Column(db.String(500), nullable=True)  
 
 
 

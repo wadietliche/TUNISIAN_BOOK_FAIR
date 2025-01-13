@@ -340,23 +340,6 @@ def add_favorite_author(favorite_author_data):
         return {"message": f"Unexpected error: {str(e)}"}, 500
 
 
-    
-
-
-
-def confirmAttendance(attendance_data):
-    event = Event.query.get_or_404(attendance_data['event_id'])
-    attendee = Attendee.query.get_or_404(attendance_data['attendee_id'])
-        
-        # Check if the attendee is already attending the event
-    present_event = PresentEvent.query.filter_by(author_id=attendee.attendee_id, event_id=event.event_id).first()
-    if not present_event:
-        # Create a new attendance record
-        new_event = PresentEvent(**attendance_data)
-        db.session.add(new_event)
-        db.session.commit()
-        return {"message": f"Attendee successfully attending event '{event.event_name}'."}
-    return {"message": "Attendee is already attending this event."}
 
 
 
@@ -464,3 +447,135 @@ def getAuthorBoothByName():
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+        
+
+
+def post(self, event_id):  # `event_id` is now taken from the URL
+        try:
+            # Extract the request data
+            data = request.json
+            attendee_id = data.get('attendee_id')
+            feedback = data.get('feedback')  # Optional feedback field
+
+            # Validate the inputs
+            if not attendee_id:
+                return jsonify({"message": "attendee_id is required."}), 400
+
+            # Check if the attendee exists
+            attendee = Attendee.query.get(attendee_id)
+            if not attendee:
+                return jsonify({"message": "Attendee not found."}), 404
+
+            # Check if the event exists
+            event = Event.query.get(event_id)
+            if not event:
+                return jsonify({"message": "Event not found."}), 404
+
+            # Check if the attendee has already confirmed attendance for this event
+            existing_attendance = PresentEvent.query.filter_by(author_id=attendee_id, event_id=event_id).first()
+            if existing_attendance:
+                return jsonify({"message": "Attendance already confirmed."}), 400
+
+            # Create a new PresentEvent entry to confirm the attendance
+            new_attendance = PresentEvent(
+                author_id=attendee_id,
+                event_id=event_id,
+                feedback=feedback  # Store the feedback if provided
+            )
+            db.session.add(new_attendance)
+            db.session.commit()
+
+            return jsonify({
+                "message": "Attendance confirmed successfully.",
+                "attendee_id": attendee_id,
+                "event_id": event_id,
+                "feedback": feedback if feedback else "No feedback provided"
+            }), 201
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        
+
+
+def ConfirmAttendence(event_id):
+    try:
+            # Extract the request data (attendee_id passed in the JSON body)
+            data = request.json
+            attendee_id = data.get('attendee_id')  # Expecting attendee_id in the JSON body
+            feedback = data.get('feedback')  # Optional feedback field
+
+            # Validate the input
+            if not attendee_id:
+                return jsonify({"message": "attendee_id is required."}), 400
+
+            # Check if the attendee exists
+            attendee = Attendee.query.get(attendee_id)
+            if not attendee:
+                return jsonify({"message": "Attendee not found."}), 404
+
+            # Check if the event exists
+            event = Event.query.get(event_id)
+            if not event:
+                return jsonify({"message": "Event not found."}), 404
+
+            # Check if the attendee has already confirmed attendance for this event
+            existing_attendance = PresentEvent.query.filter_by(author_id=attendee_id, event_id=event_id).first()
+            if existing_attendance:
+                return jsonify({"message": "Attendance already confirmed."}), 400
+
+            # Create a new PresentEvent entry to confirm the attendance
+            new_attendance = PresentEvent(
+                author_id=attendee_id,
+                event_id=event_id,
+                feedback=feedback  # Store the feedback if provided
+            )
+            db.session.add(new_attendance)
+            db.session.commit()
+
+            return jsonify({
+                "message": "Attendance confirmed successfully.",
+                "attendee_id": attendee_id,
+                "event_id": event_id,
+                "feedback": feedback if feedback else "No feedback provided"
+            }), 201
+
+    except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    
+
+
+def giveFeedback(event_id):
+    try:
+            # Extract the request data
+            data = request.json
+            attendee_id = data.get('attendee_id')
+            feedback = data.get('feedback')
+
+            if not attendee_id or not feedback:
+                return jsonify({
+                    "message": "Both attendee_id and feedback are required."
+                }), 400
+
+            # Check if the attendee is attending the event
+            present_event = PresentEvent.query.filter_by(author_id=attendee_id, event_id=event_id).first()
+
+            if not present_event:
+                return jsonify({
+                    "message": "No attendance record found for this attendee at this event."
+                }), 404
+
+            # Update the feedback
+            present_event.feedback = feedback
+            db.session.commit()
+
+            return jsonify({
+                "message": "Feedback has been updated successfully.",
+                "attendee_id": attendee_id,
+                "event_id": event_id,
+                "feedback": feedback
+            }), 200
+
+    except Exception as e:
+            return jsonify({
+                "error": str(e)
+            }), 500

@@ -53,3 +53,10 @@ author_bp.add_url_rule("/author/book", view_func=AddBook.as_view('add_book'))
 class ReservationRequest(MethodView):
     def post(self):
         return AuthorSercices.reservationRequest()
+    
+
+
+@author_bp.route("/author/event", methods=["GET","POST"])
+class Event(MethodView):
+    def get(self):
+        return AuthorSercices.get_all_events()

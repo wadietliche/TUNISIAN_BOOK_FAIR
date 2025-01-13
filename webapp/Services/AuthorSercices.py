@@ -130,3 +130,29 @@ def reservationRequest():
     except SQLAlchemyError:
         db.session.rollback()
         abort(500, message="An error occurred while sending the reservation.")
+
+
+
+
+def get_all_events():
+    try:
+        # Query all events
+        events = Event.query.all()
+
+        # Convert the result to a list of dictionaries
+        events_list = []
+        for event in events:
+            events_list.append({
+                
+                "event_name": event.event_name,
+                "location": event.location,
+                "duration": event.duration,
+                "start_hour": event.start_hour.strftime('%H:%M:%S'),
+                "final_hour": event.final_hour.strftime('%H:%M:%S')
+            })
+
+        # Return the list as JSON
+        return jsonify(events_list), 200
+    except Exception as e:
+        # Handle any errors
+        return jsonify({"error": str(e)}), 500

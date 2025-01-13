@@ -2,7 +2,7 @@ from flask.views import MethodView
 from flask import jsonify,request
 from flask_smorest import Blueprint
 from webapp.models import Admin, Author
-from webapp.schemas import AdminSchema,AdminLoginSchema,AuthorApprovalSchema
+from webapp.schemas import AdminSchema,AdminLoginSchema,AuthorApprovalSchema,EventSchema
 from webapp.Services import AdminServices
 from flask_jwt_extended import jwt_required
 from marshmallow import ValidationError
@@ -80,3 +80,13 @@ class AdminApproveAuthor(MethodView):
 
 # Register the AdminApproveAuthor method view with the blueprint
 admin_bp.add_url_rule('/admin/approve_author/<int:author_id>', view_func=AdminApproveAuthor.as_view('approve_author'))
+
+
+
+
+@admin_bp.route("/admin/event", methods=["POST", "DELETE"])
+#@jwt_required()
+class CreateEvent(MethodView):
+    @admin_bp.arguments(EventSchema)  # Automatically validate incoming JSON data
+    def post(self, event_data):
+        return AdminServices.create_event(event_data)

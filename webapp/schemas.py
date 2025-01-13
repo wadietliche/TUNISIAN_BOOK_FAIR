@@ -1,4 +1,6 @@
 from marshmallow import Schema, fields, validate, ValidationError
+from datetime import datetime
+
 
 
 class AdminSchema(Schema):
@@ -81,6 +83,7 @@ class ReservationRequestSchema(Schema):
     author_id = fields.Int(required=True)
     event_id = fields.Int(required=True)
 
+
 class AuthorApprovalSchema(Schema):
     approve = fields.Bool(required=True, error_messages={"required": "Approval flag is required."})
 
@@ -91,3 +94,27 @@ class RecommendationRequestSchema(Schema):
 
 class RecommendationResponseSchema(Schema):
     recommended_books = fields.List(fields.Nested(BookSchema)) 
+
+
+
+
+class EventSchema(Schema):
+    event_name = fields.Str(required=True)
+    location = fields.Str(required=True)
+    duration = fields.Int(required=True)
+    start_hour = fields.Str(required=True)
+    final_hour = fields.Str(required=True)
+
+    @validates("start_hour")
+    def validate_start_hour(self, value):
+        try:
+            datetime.strptime(value, "%H:%M:%S").time()
+        except ValueError:
+            raise ValidationError("Not a valid time. Expected format: HH:MM:SS.")
+
+    @validates("final_hour")
+    def validate_final_hour(self, value):
+        try:
+            datetime.strptime(value, "%H:%M:%S").time()
+        except ValueError:
+            raise ValidationError("Not a valid time. Expected format: HH:MM:SS.")

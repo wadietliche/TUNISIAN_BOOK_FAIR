@@ -5,9 +5,10 @@ from marshmallow import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, create_refresh_token
 import logging
+from datetime import datetime
 from webapp import db
-from webapp.models import Admin, Author
-from webapp.schemas import AdminSchema, AdminLoginSchema
+from webapp.models import Admin, Author, Event
+from webapp.schemas import AdminSchema, AdminLoginSchema, EventSchema
 
 
 
@@ -138,3 +139,25 @@ def approveAuthor(author_id):
 
     # Return a success message and HTTP status code 200 (OK)
     return {"message": f"Author {author.author_name} has been approved."}, 200
+
+
+def create_event(event_data):
+        try:
+            # Parse times into datetime.time objects
+            start_hour = datetime.strptime(event_data["start_hour"], "%H:%M:%S").time()
+            final_hour = datetime.strptime(event_data["final_hour"], "%H:%M:%S").time()
+            
+            # Create the event
+            event = Event(
+                event_name=event_data["event_name"],
+                location=event_data["location"],
+                duration=event_data["duration"],
+                start_hour=start_hour,
+                final_hour=final_hour,
+            )
+            db.session.add(event)
+            db.session.commit()
+            return {"message": "Event created successfully!"}, 201
+        except Exception as e:
+            db.session.rollback()
+            return {"message": str(e)}, 500

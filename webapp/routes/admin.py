@@ -112,3 +112,19 @@ class ApproveBoothRequest(MethodView):
             return AdminServices.approve_and_assign_booth(author_id, booth_reference)
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+        
+
+
+
+@admin_bp.route("/admin/author", methods=["PUT"])
+class BanAuthor(MethodView):
+    def put(self):
+        return AdminServices.banAuthor()
+    
+        
+
+@admin_bp.route("/admin/attendee", methods=["DELETE"])
+class DeleteAttendee(MethodView):
+    def delete(self):
+        return AdminServices.deleteAttendee()
+    

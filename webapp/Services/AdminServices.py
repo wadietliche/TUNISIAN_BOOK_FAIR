@@ -1,5 +1,5 @@
 from flask_smorest import abort
-from flask import jsonify
+from flask import jsonify,request
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from marshmallow import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -7,7 +7,7 @@ from flask_jwt_extended import create_access_token, create_refresh_token
 import logging
 from datetime import datetime
 from webapp import db
-from webapp.models import Admin, Author, Event, FairMap
+from webapp.models import Admin, Author, Event, FairMap,Attendee,FavoriteBook,FavoriteAuthor
 from webapp.schemas import AdminSchema, AdminLoginSchema, EventSchema, FairMapSchema2
 
 
@@ -216,3 +216,69 @@ def approve_and_assign_booth(author_id, booth_reference):
         return jsonify({
             "error": str(e)
         }), 500
+    
+
+
+def deleteAttendee():
+        try:
+            data = request.json
+            attendee_id = data.get('attendee_id')
+
+            if not attendee_id:
+                return jsonify({
+                    "message": "attendee_id is required."
+                }), 400
+            
+            # Fetch the attendee
+            attendee = Attendee.query.filter_by(attendee_id=attendee_id).first()
+            if not attendee:
+                return jsonify({
+                    "message": "Attendee not found."
+                }), 404
+            
+            # Step 1: Delete associated FavoriteBook entries
+            FavoriteBook.query.filter_by(attendee_id=attendee_id).delete()
+            
+            # Step 2: Delete associated FavoriteAuthor entries
+            FavoriteAuthor.query.filter_by(attendee_id=attendee_id).delete()
+            
+            # Step 3: Delete the Attendee
+            db.session.delete(attendee)
+            db.session.commit()
+
+            return jsonify({
+                "message": f"Attendee with ID {attendee_id} and associated data have been deleted successfully."
+            }), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        
+
+
+def banAuthor():
+        try:
+            # Parse request data
+            data = request.json
+            author_id = data.get('author_id')
+
+            if not author_id:
+                return jsonify({"message": "author_id is required."}), 400
+            
+            # Find the author
+            author = Author.query.filter_by(author_id=author_id).first()
+
+            if not author:
+                return jsonify({"message": "Author not found."}), 404
+            
+            # Update the 'approved' status to False
+            author.approved = False
+            db.session.commit()
+
+            return jsonify({
+                "message": f"Author with ID {author_id} has been banned successfully.",
+                "author_id": author_id,
+                "author_name": author.author_name
+            }), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500

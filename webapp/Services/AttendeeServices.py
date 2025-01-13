@@ -420,3 +420,47 @@ def getAuthorBooths():
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+        
+
+
+def getAuthorBoothByName():
+        try:
+            # Extract the request data
+            data = request.json
+            author_name = data.get('author_name')
+
+            if not author_name:
+                return jsonify({
+                    "message": "author_name is required."
+                }), 400
+
+            # Fetch the author by name and join with FairMap to get booth details
+            author = Author.query.filter_by(author_name=author_name).first()
+
+            if not author:
+                return jsonify({
+                    "message": f"No author found with the name {author_name}."
+                }), 404
+
+            # Get the FairMap of the author, if available
+            fair_map = FairMap.query.filter_by(author_id=author.author_id).first()
+
+            if not fair_map:
+                return jsonify({
+                    "message": f"No booth found for author {author_name}."
+                }), 404
+
+            # Display the booth reference if approved, otherwise display the author's name
+            if fair_map.status == 'approved':
+                return jsonify({
+                    "author_name": author.author_name,
+                    "booth_reference": fair_map.booth_reference
+                }), 200
+            else:
+                return jsonify({
+                    "author_name": author.author_name,
+                    "message": "Booth is not approved yet."
+                }), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500

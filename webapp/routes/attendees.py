@@ -109,9 +109,13 @@ class EventInfo(MethodView):
 
 
 
-@attendee_bp.route("/attendee/approved-authors-booths", methods=["GET"])
+@attendee_bp.route("/attendee/approved-authors-booths", methods=["GET","POST"])
 class ApprovedAuthorsBooths(MethodView):
     def get(self):
         return AttendeeServices.getAuthorBooths()
+    
+    def post(self):
+        return AttendeeServices.getAuthorBoothByName()
+    
     
     

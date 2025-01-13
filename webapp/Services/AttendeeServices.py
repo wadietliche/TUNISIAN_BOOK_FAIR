@@ -1,5 +1,5 @@
 from webapp import db
-from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author, Book
+from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author, Book,FairMap
 from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema
 from flask_smorest import abort
 from flask import request, jsonify 
@@ -367,3 +367,56 @@ def checkAuthorAttendence(author_id):
         event = Event.query.get(present_event.event_id)
         return {"message": f"Author is attending the event '{event.event_name}'. Booth: {event.location}"}
     return {"message": "Author is not attending any event."}
+
+
+
+def getEventInfo(event_id):
+        try:
+            # Fetch the specific event by ID
+            event = Event.query.filter_by(event_id=event_id).first()
+
+            if not event:
+                return jsonify({"message": "Event not found"}), 404
+
+            event_data = {
+                "event_id": event.event_id,
+                "event_name": event.event_name,
+                "location": event.location,
+                "duration": event.duration,
+                "start_hour": str(event.start_hour),
+                "final_hour": str(event.final_hour)
+            }
+
+            return jsonify(event_data), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+        
+
+def getAuthorBooths():
+        try:
+            # Fetch all authors with approved booths
+            approved_booths = (
+                FairMap.query
+                .join(Author, FairMap.author_id == Author.author_id)
+                .filter(FairMap.status == 'approved')
+                .add_columns(Author.author_name, FairMap.booth_reference)
+                .all()
+            )
+
+            if not approved_booths:
+                return jsonify({"message": "No approved booths found."}), 404
+
+            # Prepare the response data
+            data = [
+                {
+                    "author_name": booth.author_name,
+                    "booth_reference": booth.booth_reference
+                }
+                for booth in approved_booths
+            ]
+
+            return jsonify({"approved_authors_booths": data}), 200
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500

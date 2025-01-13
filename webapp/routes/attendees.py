@@ -2,7 +2,7 @@ from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from webapp import db
-from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author
+from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author, FairMap
 from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,CombinedSearchSchema,RecommendationResponseSchema,RecommendationRequestSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
@@ -53,11 +53,11 @@ class AddFavoriteAuthor(MethodView):
 
 
 # Check if Author is Attending (GET request to check if an author is attending an event)
-@attendee_bp.route("/attendee/author/<int:author_id>/attending")
+"""@attendee_bp.route("/attendee/author/<int:author_id>/attending")
 @jwt_required()
 class CheckAuthorAttendance(MethodView):
     def get(self, author_id):
-       return AttendeeServices.checkAuthorAttendence(author_id)
+       return AttendeeServices.checkAuthorAttendence(author_id)"""
 
 
 
@@ -99,4 +99,19 @@ class RecommendBooks(MethodView):
     @attendee_bp.response(200, RecommendationResponseSchema)
     def post(self, attendee_data):
        return RecommendationServices.recommend_books_for_attendee(attendee_data)
+    
+
+
+@attendee_bp.route("/attendee/event/<int:event_id>", methods=["GET"])
+class EventInfo(MethodView):
+    def get(self, event_id):
+        return AttendeeServices.getEventInfo(event_id)
+
+
+
+@attendee_bp.route("/attendee/approved-authors-booths", methods=["GET"])
+class ApprovedAuthorsBooths(MethodView):
+    def get(self):
+        return AttendeeServices.getAuthorBooths()
+    
     

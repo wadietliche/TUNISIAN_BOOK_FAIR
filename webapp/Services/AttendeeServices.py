@@ -1,4 +1,5 @@
 from webapp import db
+from datetime import timedelta
 from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author, Book,FairMap
 from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema
 from flask_smorest import abort
@@ -8,7 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 from marshmallow import ValidationError
 from flask import jsonify
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import create_access_token, create_refresh_token,get_jwt
 
 
 
@@ -129,14 +130,17 @@ def attendeeLogin(login_data):
         attendee = Attendee.query.filter_by(attendee_name=login_data['attendee_name']).first()
         
         if attendee and check_password_hash(attendee.password, login_data['password']):
-
-            access_token= create_access_token(identity=attendee.attendee_name)
+            additional_claims = {
+                "is_attendee": True,
+                "admin_id": attendee.attendee_id
+            }
+            access_token= create_access_token(identity=attendee.attendee_name,additional_claims=additional_claims,expires_delta=timedelta(minutes=15))
             refresh_token=create_refresh_token(identity=attendee.attendee_name)
             
             return jsonify({"message": "Login successful", 
                             "attendee_id": attendee.attendee_id,
-                            "tokens":{"access":access_token,
-                                      "refresh":refresh_token}}), 200        
+                            "tokens":{"access":access_token
+                                      }}), 200        
         abort(401, message="Invalid credentials")
     except Exception as e:
         abort(500, message=f"An error occurred during login: {str(e)}")

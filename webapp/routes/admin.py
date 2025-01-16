@@ -10,8 +10,6 @@ from marshmallow import ValidationError
 
 # Create the Blueprint for Admin
 admin_bp = Blueprint("Admins", "admins", description="Operations on Admins")
-
-
 class CreateAdmin(MethodView):
     
     @jwt_required()  # Ensure that JWT is required for this endpoint

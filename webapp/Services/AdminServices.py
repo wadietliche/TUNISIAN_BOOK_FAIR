@@ -3,7 +3,7 @@ from flask import jsonify,request
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from marshmallow import ValidationError
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt_identity,get_jwt
 import logging
 from datetime import datetime
 from webapp import db
@@ -23,7 +23,7 @@ def createNewAdmin(admin_data):
         # Check if an admin with the same name already exists
         existing_admin = Admin.query.filter_by(admin_name=validated_data['admin_name']).first()
         if existing_admin:
-            abort(400, message="An admin with this name already exists.")
+            return jsonify({"message": "An admin with this name already exists."}), 400
         
         # Hash the password before storing it
         validated_data['password'] = generate_password_hash(validated_data['password'])
@@ -33,6 +33,7 @@ def createNewAdmin(admin_data):
         db.session.add(admin)  # Add the new Admin to the session
         db.session.commit()  # Commit the transaction
         
+        # Return success message with admin details
         return jsonify({
             "message": "Admin created successfully.",
             "admin": {
@@ -44,16 +45,16 @@ def createNewAdmin(admin_data):
     except IntegrityError:
         # Handle integrity errors (e.g., duplicate admin name)
         db.session.rollback()  # Rollback the session to avoid partial commits
-        abort(400, message="An admin with this name already exists.")
+        return jsonify({"message": "An admin with this name already exists."}), 400
     
     except SQLAlchemyError as e:
         # Handle other SQLAlchemy errors (e.g., database connection issues)
         db.session.rollback()  
-        abort(500, message=f"An error occurred while processing your request: {str(e)}")
+        return jsonify({"message": f"An error occurred while processing your request: {str(e)}"}), 500
     
     except ValidationError as err:
         # Handle validation errors if any (e.g., required fields missing)
-        abort(400, message=err.messages)  # Return validation errors if any
+        return jsonify({"message": err.messages}), 400  # Return validation errors if any
 
 
 
@@ -66,16 +67,20 @@ def adminLogin(login_data):
 
         # Check if admin exists and password is correct
         if admin and check_password_hash(admin.password, login_data['password']):
+            additional_claims = {
+                "is_admin": True,
+                "admin_id": admin.admin_id
+            }
             # Generate access and refresh tokens
-            access_token = create_access_token(identity=admin.admin_name)
+            access_token = create_access_token(identity=admin.admin_name,additional_claims=additional_claims)
             refresh_token = create_refresh_token(identity=admin.admin_name)
-
             return jsonify({
                 "message": "Login successful",
                 "admin_id": admin.admin_id,
                 "tokens": {
                     "access": access_token,
-                    "refresh": refresh_token
+                    #"refresh": refresh_token
+                    
                 }
             }), 200
 
@@ -142,25 +147,33 @@ def approveAuthor(author_id):
 
 
 def create_event(event_data):
-        try:
-            # Parse times into datetime.time objects
-            start_hour = datetime.strptime(event_data["start_hour"], "%H:%M:%S").time()
-            final_hour = datetime.strptime(event_data["final_hour"], "%H:%M:%S").time()
-            
-            # Create the event
-            event = Event(
-                event_name=event_data["event_name"],
-                location=event_data["location"],
-                duration=event_data["duration"],
-                start_hour=start_hour,
-                final_hour=final_hour,
-            )
-            db.session.add(event)
-            db.session.commit()
-            return {"message": "Event created successfully!"}, 201
-        except Exception as e:
-            db.session.rollback()
-            return {"message": str(e)}, 500
+    try:
+        # Check if the event already exists (using event_name, or any unique field)
+        existing_event = Event.query.filter_by(event_name=event_data["event_name"]).first()
+        
+        if existing_event:
+            return {"message": "Event with this name already exists."}, 409  # Conflict status code
+
+        # Parse times into datetime.time objects
+        start_hour = datetime.strptime(event_data["start_hour"], "%H:%M:%S").time()
+        final_hour = datetime.strptime(event_data["final_hour"], "%H:%M:%S").time()
+        
+        # Create the new event
+        event = Event(
+            event_name=event_data["event_name"],
+            location=event_data["location"],
+            duration=event_data["duration"],
+            start_hour=start_hour,
+            final_hour=final_hour,
+        )
+        db.session.add(event)
+        db.session.commit()
+        return {"message": "Event created successfully!"}, 201  # Created status code
+    except Exception as e:
+        db.session.rollback()
+        return {"message": str(e)}, 500  # Internal server error
+
+
         
 
 
@@ -282,3 +295,9 @@ def banAuthor():
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+        
+
+
+def returnClaims():
+    claims=get_jwt()
+    return{"claims":claims}

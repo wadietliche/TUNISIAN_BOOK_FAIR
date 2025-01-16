@@ -4,7 +4,7 @@ from flask_smorest import Blueprint
 from webapp.models import Admin, Author
 from webapp.schemas import AdminSchema,AdminLoginSchema,AuthorApprovalSchema,EventSchema
 from webapp.Services import AdminServices
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required,get_jwt
 from marshmallow import ValidationError
 
 
@@ -12,14 +12,34 @@ from marshmallow import ValidationError
 admin_bp = Blueprint("Admins", "admins", description="Operations on Admins")
 
 
-@admin_bp.route("/create")
 class CreateAdmin(MethodView):
-    @admin_bp.arguments(AdminSchema)
+    
+    @jwt_required()  # Ensure that JWT is required for this endpoint
+    @admin_bp.arguments(AdminSchema)  # Automatically validate incoming JSON data
     def post(self, admin_data):
         """
         Endpoint to create a new admin.
         """
-        return AdminServices.createNewAdmin(admin_data)
+        try:
+            # Extract claims from the JWT
+            claims = get_jwt()
+            
+            # Ensure that the user has admin privileges
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+
+            # Proceed with admin creation logic
+            return AdminServices.createNewAdmin(admin_data)
+
+        except Exception as e:
+            # Handle exceptions and return an error response
+            return jsonify({"error": str(e)}), 500
+
+
+# Explicitly register the CreateAdmin view in the blueprint
+admin_bp.add_url_rule('/create', view_func=CreateAdmin.as_view('create_admin'))
 
 
 
@@ -32,72 +52,137 @@ class adminLogin(MethodView):
 
 
 
-
-# Admin resource for handling a specific admin by ID (GET and DELETE)
+#done
 @admin_bp.route("/admin/<int:admin_id>", methods=["GET", "DELETE"])
-@jwt_required()
 class AdminResource(MethodView):
+    
+    @jwt_required()  # Ensure the user is authenticated
     def get(self, admin_id):
         """Retrieve an admin by ID."""
-        return AdminServices.getAdminById(admin_id)
+        try:
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
 
+            # Retrieve the admin by ID
+            return AdminServices.getAdminById(admin_id)
 
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
+    @jwt_required()  # Ensure the user is authenticated
     def delete(self, admin_id):
-        return AdminServices.delAdminById(admin_id)
+        try:
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+
+            # Delete the admin by ID
+            return AdminServices.delAdminById(admin_id)
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 
-
+#done
 # Admin resource for handling a list of admins (GET all) and creating new admin (POST)
 @admin_bp.route("/admin", methods=["GET", "POST"])
-#@jwt_required()
 class AdminListResource(MethodView):
+    
+    @jwt_required()  # Ensure the user is authenticated
     def get(self):
         """Retrieve all admins."""
-        return AdminServices.returnAllAdmins()
-    
+        try:
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
 
-    
+            # Retrieve and return all admins
+            return AdminServices.returnAllAdmins()
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @jwt_required()  # Ensure the user is authenticated
     @admin_bp.arguments(AdminSchema)  # Automatically validate incoming JSON data
     @admin_bp.response(201, AdminSchema)  # Serialize and return the Admin object after it's created
-    
-
-
     def post(self, admin_data):
-        return AdminServices.createNewAdmin(admin_data)
+        try:
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+
+            # Create a new admin
+            return AdminServices.createNewAdmin(admin_data)
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 
 
-
+#done
 class AdminApproveAuthor(MethodView):
-    @jwt_required()
+    @jwt_required()  # Ensure the user is authenticated
     def post(self, author_id):
-        # Call the service method that handles approving the author
-        response = AdminServices.approveAuthor(author_id)
-        
-        # Return the response as JSON with the appropriate HTTP status code
-        return jsonify(response[0]), response[1]
+        try:
+            # Extract JWT claims to check if the user is an admin
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+
+            # Call the service method that handles approving the author
+            response = AdminServices.approveAuthor(author_id)
+
+            # Return the response as JSON with the appropriate HTTP status code
+            return jsonify(response[0]), response[1]
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
 
 # Register the AdminApproveAuthor method view with the blueprint
 admin_bp.add_url_rule('/admin/approve_author/<int:author_id>', view_func=AdminApproveAuthor.as_view('approve_author'))
 
 
 
-
+#done
 @admin_bp.route("/admin/event", methods=["POST", "DELETE"])
-#@jwt_required()
 class CreateEvent(MethodView):
+    @jwt_required()  # Ensure the user is authenticated
     @admin_bp.arguments(EventSchema)  # Automatically validate incoming JSON data
     def post(self, event_data):
+        # Extract JWT claims to check if the user is an admin
+        claims = get_jwt()
+        if claims.get("is_admin") != True:
+            return jsonify({"message": "Access denied: Administrator privileges are required to access this endpoint."}), 403
+
+        # Call the service method to create the event
         return AdminServices.create_event(event_data)
     
 
 
-
+#done
 @admin_bp.route("/admin/author/booth", methods=["PUT"])
 class ApproveBoothRequest(MethodView):
+    @jwt_required()  # Ensure the user is authenticated
     def put(self):
         try:
+            # Extract JWT claims to check if the user is an admin
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+
             # Extract the request data
             data = request.json
             author_id = data.get('author_id')
@@ -110,21 +195,62 @@ class ApproveBoothRequest(MethodView):
 
             # Call the service function
             return AdminServices.approve_and_assign_booth(author_id, booth_reference)
+        
         except Exception as e:
             return jsonify({"error": str(e)}), 500
         
 
 
-
+#done
 @admin_bp.route("/admin/author", methods=["PUT"])
 class BanAuthor(MethodView):
+    @jwt_required()  # Ensure the user is authenticated
     def put(self):
-        return AdminServices.banAuthor()
+        try:
+            # Extract JWT claims to check if the user is an admin
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+
+            # Call the service function to ban the author
+            return AdminServices.banAuthor()
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
     
         
-
+#done
 @admin_bp.route("/admin/attendee", methods=["DELETE"])
 class DeleteAttendee(MethodView):
+    @jwt_required()  # Ensure the user is authenticated
     def delete(self):
-        return AdminServices.deleteAttendee()
+        try:
+            # Extract JWT claims to check if the user is an admin
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+
+            # Call the service function to delete an attendee
+            return AdminServices.deleteAttendee()
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
     
+
+
+
+
+@admin_bp.route("/adminc", methods=["GET"])
+class AdminClaims(MethodView):
+    @jwt_required()
+    def get(self):
+        try:
+            claims = AdminServices.returnClaims()
+            return jsonify(claims), 200
+        except Exception as e:
+            
+            return jsonify({"error": "An unexpected error occurred"}), 500

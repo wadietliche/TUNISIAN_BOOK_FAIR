@@ -6,7 +6,7 @@ from webapp.schemas import AuthorSchema, BookSchema, ReservationRequestSchema,Au
 from sqlalchemy.exc import SQLAlchemyError
 from marshmallow import ValidationError
 from werkzeug.security import generate_password_hash,check_password_hash
-from flask_jwt_extended import create_access_token, create_refresh_token
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt
 import uuid
 
 
@@ -66,8 +66,12 @@ def authorLogin(login_data):
 
             # Check if the account is approved
             if author.approved:
+                additional_claims = {
+                "is_author": True,
+                "author_id": author.author_id
+            }
                 # Generate JWT tokens
-                access_token = create_access_token(identity=author.username)
+                access_token = create_access_token(identity=author.username,additional_claims=additional_claims)
                 refresh_token = create_refresh_token(identity=author.username)
 
                 # Return the response with tokens
@@ -75,8 +79,8 @@ def authorLogin(login_data):
                     "message": "Login successful",
                     "author_id": author.author_id,
                     "tokens": {
-                        "access": access_token,
-                        "refresh": refresh_token
+                        "access": access_token
+                        
                     }
                 }), 200
             else:

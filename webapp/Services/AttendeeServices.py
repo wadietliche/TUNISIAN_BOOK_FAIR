@@ -132,7 +132,7 @@ def attendeeLogin(login_data):
         if attendee and check_password_hash(attendee.password, login_data['password']):
             additional_claims = {
                 "is_attendee": True,
-                "admin_id": attendee.attendee_id
+                "attendee_id": attendee.attendee_id
             }
             access_token= create_access_token(identity=attendee.attendee_name,additional_claims=additional_claims,expires_delta=timedelta(minutes=15))
             refresh_token=create_refresh_token(identity=attendee.attendee_name)

@@ -6,7 +6,7 @@ from webapp.models import Author, Book, FairMap, PresentEvent, Event
 from webapp.schemas import AuthorSchema, BookSchema, ReservationRequestSchema,AuthorLoginSchema
 from sqlalchemy.exc import SQLAlchemyError
 from webapp.Services import AuthorSercices
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required,get_jwt
 
 
 
@@ -33,12 +33,20 @@ class AuthorLogin(MethodView):
 # Route to add a new book
 class AddBook(MethodView):
     @author_bp.arguments(BookSchema)
-    @jwt_required()
+    @jwt_required()  # Ensure the user is authenticated
     def post(self, book_data):
         """Handle the POST request to add a new book."""
         try:
+            claims = get_jwt()  # Get JWT claims
+            # Check if the user is either an admin or an author
+            if not (claims.get("is_admin") or claims.get("is_author")):
+                return jsonify({
+                    "message": "Access denied: You must be either an admin or an author to access this resource."
+                }), 403
+
             # Call the service function to add the book
             return AuthorSercices.addBookByAuthor(book_data)
+
         except Exception as e:
             return jsonify({"message": f"Error occurred: {str(e)}"}), 500
 
@@ -47,20 +55,42 @@ author_bp.add_url_rule("/author/book", view_func=AddBook.as_view('add_book'))
 
 
 
-# Route to send a reservation request for an event
-"""@author_bp.route("/author/reservation", methods=["POST"])
-@jwt_required()
-class ReservationRequest(MethodView):
-    def post(self):
-        return AuthorSercices.reservationRequest()"""
-    
 
 
-@author_bp.route("/author/event", methods=["GET","POST"])
+@author_bp.route("/author/event", methods=["GET", "POST"])
 class Event(MethodView):
-    def get(self):
-        return AuthorSercices.get_all_events()
     
-    @author_bp.arguments(ReservationRequestSchema)
+    @jwt_required()  # Ensure the user is authenticated
+    def get(self):
+        """Retrieve all events."""
+        try:
+            claims = get_jwt()  # Get JWT claims
+            # Ensure the user is either an admin or an author
+            if not (claims.get("is_admin") or claims.get("is_author")):
+                return jsonify({
+                    "message": "Access denied: You must be either an admin or an author to access this resource."
+                }), 403
+
+            # Call the service to retrieve all events
+            return AuthorSercices.get_all_events()
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    @jwt_required()  # Ensure the user is authenticated
+    @author_bp.arguments(ReservationRequestSchema)  # Validate incoming request data
     def post(self, request_data):
-        return AuthorSercices.post_booth_request(request_data)
+        """Handle booth reservation requests."""
+        try:
+            claims = get_jwt()  # Get JWT claims
+            # Ensure the user is either an admin or an author
+            if not (claims.get("is_admin") or claims.get("is_author")):
+                return jsonify({
+                    "message": "Access denied: You must be either an admin or an author to access this resource."
+                }), 403
+
+            # Call the service to process the booth reservation
+            return AuthorSercices.post_booth_request(request_data)
+
+        except Exception as e:
+            return jsonify({"message": f"Error occurred: {str(e)}"}), 500

@@ -125,12 +125,6 @@ def returnAllAdmins():
 
 
 
-"""def approveAuthor(author_id):
-    author = Author.query.get_or_404(author_id)
-    # Approve the author
-    author.approved = True
-    db.session.commit()
-    return jsonify({"message": f"Author {author.author_name} has been approved."}), 200"""
 
 def approveAuthor(author_id):
     # Query the author by their ID, if not found, an error will be raised
@@ -301,3 +295,55 @@ def banAuthor():
 def returnClaims():
     claims=get_jwt()
     return{"claims":claims}
+
+
+
+def get_attendee_details():
+    try:
+        # Query the attendee table for attendee_id and attendee_name
+        attendees = db.session.query(Attendee.attendee_id, Attendee.attendee_name).all()
+        
+        # Convert the result to a list of dictionaries
+        result = [{"attendee_id": attendee.attendee_id, "attendee_name": attendee.attendee_name} for attendee in attendees]
+        
+        return result
+    except Exception as e:
+        print(f"An error occurred while fetching attendees: {e}")
+        return []
+
+
+
+def get_all_authors():
+        try:
+            # Query all authors including the 'approved' status
+            authors = db.session.query(Author.author_id, Author.author_name, Author.approved).all()
+            
+            # Convert the query result into a list of dictionaries
+            author_list = [
+                {"author_id": author_id, "author_name": author_name, "approved": approved} 
+                for author_id, author_name, approved in authors
+            ]
+            
+            return {"authors": author_list}, 200
+        except Exception as e:
+            return {"error": f"An error occurred: {str(e)}"}, 500
+        
+
+
+def delete_event(event_id):
+    try:
+        # Query the event to see if it exists
+        event = Event.query.get(event_id)
+        
+        if not event:
+            return {"message": "Event not found."}, 404  # Not Found status code
+
+        # Delete the event
+        db.session.delete(event)
+        db.session.commit()
+
+        return {"message": "Event deleted successfully!"}, 200  # OK status code
+    
+    except Exception as e:
+        db.session.rollback()
+        return {"message": f"An error occurred: {str(e)}"}, 500  # Internal server error

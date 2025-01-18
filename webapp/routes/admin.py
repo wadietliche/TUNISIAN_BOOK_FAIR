@@ -166,6 +166,26 @@ class CreateEvent(MethodView):
         # Call the service method to create the event
         return AdminServices.create_event(event_data)
     
+    @jwt_required()
+    def delete(self):
+        try:
+            # Extract JWT claims to check if the user is an admin
+            claims = get_jwt()
+            if claims.get("is_admin") != True:
+                return jsonify({"message": "Access denied: Administrator privileges are required to access this endpoint."}), 403
+            
+            # Extract event ID from the request's JSON body
+            event_id = request.json.get('event_id')
+            if not event_id:
+                return jsonify({"message": "Event ID is required."}), 400  # Bad Request
+            
+            # Call the service method to delete the event
+            response, status_code = AdminServices.delete_event(event_id)
+            return jsonify(response), status_code
+        
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    
 
 
 #done
@@ -252,3 +272,34 @@ class AdminClaims(MethodView):
         except Exception as e:
             
             return jsonify({"error": "An unexpected error occurred"}), 500
+        
+
+@admin_bp.route("/admin/attendee", methods=["GET"])
+class Managesers(MethodView):
+    @jwt_required()
+    def get(self):
+        try: 
+            claims = get_jwt()
+            if not claims.get("is_admin"):
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+            return AdminServices.get_attendee_details()
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+            
+
+
+@admin_bp.route("/admin/author", methods=["GET"])
+class Managesers(MethodView):
+    @jwt_required()
+    def get(self):
+        try: 
+            claims = get_jwt()
+            if not claims.get("is_admin"):
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+            return AdminServices.get_all_authors()
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500

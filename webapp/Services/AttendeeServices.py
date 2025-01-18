@@ -281,10 +281,10 @@ def add_favorite_author(favorite_author_data):
     try:
         # Extract attendee ID and author name from the input
         attendee_id = favorite_author_data['attendee_id']
-        author_name = favorite_author_data['author_name']
+        author_name = favorite_author_data['author_name'].strip()  # Strip spaces
 
-        # Check if the author already exists in the database
-        author = Author.query.filter_by(author_name=author_name).first()
+        # Make author lookup case-insensitive
+        author = Author.query.filter(Author.author_name.ilike(author_name)).first()
 
         if not author:
             # If the author doesn't exist, fetch author details from Google Books API
@@ -323,7 +323,7 @@ def add_favorite_author(favorite_author_data):
 
         if existing_favorite:
             # If the author is already in the favorite list, return a message
-            return {"message": "This author is already in your favorites."}, 400
+            return {"message": f"The author '{author.author_name}' is already in your favorites."}, 400
 
         # Create a new favorite author entry if the author is not already in the favorites
         favorite_author = FavoriteAuthor(author_id=author.author_id, attendee_id=attendee_id)

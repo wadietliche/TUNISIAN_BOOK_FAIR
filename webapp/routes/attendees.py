@@ -6,7 +6,7 @@ from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, 
 from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,CombinedSearchSchema,RecommendationResponseSchema,RecommendationRequestSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
-from flask import jsonify,Response
+from flask import jsonify,Response,request
 from webapp.Services import AttendeeServices, RecommendationServices
 from flask_jwt_extended import jwt_required, get_jwt
 
@@ -62,7 +62,8 @@ class AddFavoriteBook(MethodView):
 @attendee_bp.route("/attendee/favorite/author", methods=["POST"])
 class AddFavoriteAuthor(MethodView):
     @jwt_required()  # Ensure that JWT is required for this endpoint
-    def post(self, favorite_author_data):
+    @attendee_bp.arguments(FavoriteAuthorSchema)
+    def post(self,favorite_author_data):
         """
         Endpoint to add a favorite author for the attendee.
         Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
@@ -71,7 +72,7 @@ class AddFavoriteAuthor(MethodView):
             claims = get_jwt()  # Get the JWT claims
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
-                    "message": "Access denied: You must be either an admin or an attendee to access this resource."
+                    "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
             # If the claim is valid, proceed to add favorite author
@@ -97,7 +98,7 @@ class AttendEvent(MethodView):
             claims = get_jwt()  # Get the JWT claims
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
-                    "message": "Access denied: You must be either an admin or an attendee to access this resource."
+                    "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
             # If the claim is valid, proceed to confirm attendance
@@ -118,7 +119,7 @@ def get(self, search_data):
             claims = get_jwt()  # Get the JWT claims
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
-                    "message": "Access denied: You must be either an admin or an attendee to access this resource."
+                    "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
             # Use the service to process the search request

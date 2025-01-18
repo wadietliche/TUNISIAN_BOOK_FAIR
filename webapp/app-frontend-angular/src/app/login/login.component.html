@@ -1,0 +1,28 @@
+<div class="login-container">
+    <h2>Login</h2>
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div>
+        <label for="username">Username</label>
+        <input id="username" formControlName="username" type="text" />
+       
+      </div>
+  
+      <div>
+        <label for="password">Password</label>
+        <input id="password" formControlName="password" type="password" />
+        
+      </div>
+  
+      <!-- Add a select dropdown for the role -->
+      <div>
+        <label for="role">Role</label>
+        <select id="role" formControlName="role">
+          <option value="" disabled>Select a role</option>  <!-- Disabled default option -->
+          <option *ngFor="let role of roles" [value]="role">{{ role }}</option>  <!-- Dynamically populate options -->
+        </select>
+       
+      </div>
+  
+      <button type="submit" [disabled]="loginForm.invalid">Login</button>
+    </form>
+  </div>

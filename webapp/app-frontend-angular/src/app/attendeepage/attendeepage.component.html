@@ -1,0 +1,110 @@
+<div class="container">
+  <!-- Title -->
+  <h1 class="title">Attendee Page</h1>
+
+  <!-- First row: 3 buttons -->
+  <div class="row">
+    <div id="event-infos" class="btn">
+      <!-- 5 fields -->
+      <h4>Event Informations</h4>
+      <div class="row">
+      <label for="event-name">Event Name:</label>
+      <span id="event-name">{{ this.eventInfo.eventname}}</span>
+      </div>
+      <div class="row">
+      <label for="event-date">Duration:</label>
+      <span id="event-date">{{ this.eventInfo.duration}}</span>
+      </div>
+      <div class="row">
+      <label for="event-location">start hour:</label>
+      <span id="event-location">{{ this.eventInfo.start_hour}}</span>
+      </div>
+      <div class="row">
+      <label for="attendee-count">final hour:</label>
+      <span id="attendee-count">{{ this.eventInfo.final_hour}}</span>
+      </div>
+      <div class="row">
+      <label for="event-description">Location:</label>
+      <span id="event-description">{{ this.eventInfo.location}}</span>
+      </div>
+    </div>
+    <div class="btn center-div">      
+    <button id ="confirm-attendee" class="btn-sp btn-confirm" (click)="onConfirmAttendee()">Confirm attendee</button>
+  </div>
+    <div class="btn">
+      <input [(ngModel)]="feedback" type="textarea" placeholder="Put your feedback" class="feedback-area"/> 
+
+      <button id ="give-feedback" class="btn-sp" (click)="onSendFeedBack()">Give feedback</button>
+    </div>
+  </div>
+
+  <!-- Second row: 1 button -->
+  <div class="row">
+    <div id="author-books-infos" class="one-row-btn" (click)="onButtonClick('Button 4')">Get authors and their books
+    <table >
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Age</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Using *ngFor to iterate over users, displaying two fields (name and age) -->
+        <tr *ngFor="let authorBook of authorBooks; let i = index">
+          <td>{{ i + 1 }}</td> <!-- Display index -->
+          <td>{{ authorBook.author_name }}</td> <!-- Display name field -->
+          <td>{{ authorBook.booth_reference }}</td>  <!-- Display age field -->
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  </div>
+
+  <!-- Third row: 3 buttons -->
+  <div class="row">
+    <div id="event-infos" class="infos-book-data">
+    <input [(ngModel)]="bookeTitle" type="textarea" placeholder="Put your book title" /> 
+    <input [(ngModel)]="authorName" type="textarea" placeholder="Put your author"/> 
+    <button class="btn-sp" (click)="OnSearchBook()">Search book</button>
+
+      <!-- 5 fields -->
+      <h4>Book Informations</h4>
+      <div class="row">
+      <label for="event-name">description: &NonBreakingSpace;</label>
+      <span id="event-name">{{ this.book.description}}</span>
+      </div>
+      <div class="row">
+      <label for="event-date">Title:</label>
+      <span id="event-date">{{ this.book.title}}</span>
+      </div>
+      <div class="row">
+      <label for="event-location">IsBn:</label>
+      <span id="event-location">{{ this.book.isbn}}</span>
+      </div>
+      <div class="row">
+      <label for="attendee-count">Publisher:</label>
+      <span id="attendee-count">{{ this.book.publisher}}</span>
+      </div>
+      <div class="row">
+      <label for="event-description">Date published:</label>
+      <span id="event-description">{{ this.book.publishedDate}}</span>
+      </div>
+    </div>
+  </div >
+    <div class="row">
+    <div class="btn">Add a favorite book
+    <input [(ngModel)]="favouriteBookTitle" type="textarea" placeholder="Put your book title"/> 
+    <button class="btn-sp" (click)="onAddFavouriteBook()">Add book as favorite</button>
+    </div>
+    <div class="btn">Add a favorite Author
+      <input [(ngModel)]="favouriteAuthorName" type="textarea" placeholder="Put your author"/> 
+      <button class="btn-sp" (click)="onAddFavouriteAuthor()">Add author as favorite</button>
+      </div>
+  </div>
+
+  <!-- Fourth row: 1 button -->
+  <div class="row">
+    <button class="one-row-btn" (click)="onButtonClick('Button 8')">Content based recommandation</button>
+  </div>
+</div>

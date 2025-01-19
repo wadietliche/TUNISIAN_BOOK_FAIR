@@ -89,7 +89,7 @@ def _get_favorite_book(attendee_id: int) -> Optional[Dict]:
         favorite = (
             db.session.query(FavoriteBook)
             .filter(FavoriteBook.attendee_id == attendee_id)
-            .order_by(FavoriteBook.book_id.desc())  # Order by book_id or other relevant field
+            .order_by(FavoriteBook.book_id.desc())  
             .first()
         )
         
@@ -99,8 +99,6 @@ def _get_favorite_book(attendee_id: int) -> Optional[Dict]:
         book = db.session.query(Book).get(favorite.book_id)
         if not book:
             return None
-            
-        # Get author name safely
         author_name = book.author_relation.author_name if book.author_relation else "Unknown"
         
         book_data = {

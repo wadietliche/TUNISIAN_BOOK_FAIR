@@ -9,8 +9,8 @@ class AdminSchema(Schema):
     password = fields.Str(required=True)
 
 class AdminLoginSchema(Schema):
-    admin_name = fields.Str(required=True)  # Admin name is required
-    password = fields.Str(required=True)    # Password is required
+    admin_name = fields.Str(required=True)  
+    password = fields.Str(required=True)    
 
 class AttendeeSchema(Schema):
     attendee_id = fields.Int(dump_only=True)
@@ -23,7 +23,7 @@ class AttendeeLoginSchema(Schema):
 
 class FavoriteAuthorSchema(Schema):
     favorite_author_id = fields.Int(dump_only=True)
-    author_name = fields.Str(required=True)  # Expecting a string name
+    author_name = fields.Str(required=True) 
     attendee_id = fields.Int(required=True)
 
 
@@ -56,19 +56,19 @@ class EventAttendanceSchema(Schema):
 
 
 class AuthorSchema(Schema):
-    author_name = fields.Str(required=True)  # Author's full name
-    username = fields.Str(required=True)    # Author's unique username
-    password = fields.Str(required=True)    # Author's password
+    author_name = fields.Str(required=True)  
+    username = fields.Str(required=True)   
+    password = fields.Str(required=True)    
 
-# Schema to handle login data for authors
+
 class AuthorLoginSchema(Schema):
-    username = fields.Str(required=True)    # Author's unique username
-    password = fields.Str(required=True,validate=validate.Length(min=1))    # Author's password
+    username = fields.Str(required=True)    
+    password = fields.Str(required=True,validate=validate.Length(min=1))  
 
-# Schema to handle book data
+
 class BookSchema(Schema):
     book_id = fields.Int(dump_only=True)
-    isbn = fields.Str(required=True)  # Add ISBN as a required field
+    isbn = fields.Str(required=True) 
     title = fields.Str(required=True)
     author_id = fields.Int(required=True)
     published_year = fields.Int()
@@ -94,9 +94,9 @@ class RecommendationResponseSchema(Schema):
 
 
 class FairMapSchema(Schema):
-    booth_reference = fields.String(required=False)  # Optional during request creation
-    author_id = fields.Integer(required=True)  # Required to link to the author
-    status = fields.String(required=False, dump_only=True)  # Read-only, defaults to 'pending'
+    booth_reference = fields.String(required=False)  
+    author_id = fields.Integer(required=True)  
+    status = fields.String(required=False, dump_only=True) 
 
 
 class EventSchema(Schema):

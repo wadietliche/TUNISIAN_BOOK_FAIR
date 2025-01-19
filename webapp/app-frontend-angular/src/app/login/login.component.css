@@ -1,40 +1,107 @@
-.login-container {
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    /* Apply Poppins font globally */
+    html, body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh; /* Full viewport height */
+      background: linear-gradient(135deg, #f3f4f6, #e8eaf6); /* Subtle gradient background */
+      height: 100%; /* Ensure full height for flex centering */
   }
-  
+  html, body {
+    width: 1980px;   /* Set fixed width */
+    height: 1080px;  /* Set fixed height */
+    overflow: hidden; /* Prevent scrolling */
+  }
+
+  /* Centering container for login form */
+  .login-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Center content horizontally */
+      justify-content: center; /* Center content vertically */
+      max-width: 400px;
+      padding: 30px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      width: 100%; /* Allow container to take full width up to max-width */
+  }
+
+  /* Header */
   h2 {
-    text-align: center;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 1rem;
+      font-family: 'Poppins', sans-serif; /* Apply Poppins font */
   }
-  
+
+  /* Form */
   form {
-    display: flex;
-    flex-direction: column;
+      display: flex;
+      flex-direction: column;
+      width: 100%; /* Ensure form takes full width inside the container */
   }
-  
+
+  /* Input Groups */
+  .input-group {
+      margin-bottom: 20px; /* Increased space between inputs */
+  }
+
+  /* Labels */
   label {
-    margin-bottom: 5px;
+      margin-bottom: 5px;
+      font-size: 1rem;
+      color: #333;
+      font-weight: 500;
+      font-family: 'Poppins', sans-serif; /* Apply Poppins font */
   }
-  
-  input {
-    margin-bottom: 15px;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
+
+  /* Inputs and Select */
+  input, select {
+      margin-bottom: 15px; /* Added more space between inputs */
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      color: #333;
+      font-family: 'Poppins', sans-serif; /* Apply Poppins font */
+      transition: border-color 0.3s ease;
+      width: 100%; /* Ensure inputs take full width of the form */
   }
-  
+
+  /* Input/Select Focus */
+  input:focus, select:focus {
+      border-color: #6b2fdb;
+      outline: none;
+  }
+
+  /* Button */
   button {
-    padding: 10px;
-    background-color: #4caf50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+      padding: 12px;
+      background-color: #6b2fdb; /* Updated color */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Poppins', sans-serif; /* Apply Poppins font */
+      margin-top: 15px; /* Added space above button */
   }
-  
+
+  button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(107, 47, 219, 0.3);
+  }
+
   button:disabled {
-    background-color: #ccc;
+      background-color: #ccc;
+      cursor: not-allowed;
   }

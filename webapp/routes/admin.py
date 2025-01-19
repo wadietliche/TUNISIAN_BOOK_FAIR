@@ -8,40 +8,34 @@ from flask_jwt_extended import jwt_required,get_jwt
 from marshmallow import ValidationError
 
 
-# Create the Blueprint for Admin
+
 admin_bp = Blueprint("Admins", "admins", description="Operations on Admins")
 class CreateAdmin(MethodView):
     
-    @jwt_required()  # Ensure that JWT is required for this endpoint
-    @admin_bp.arguments(AdminSchema)  # Automatically validate incoming JSON data
+    @jwt_required() 
+    @admin_bp.arguments(AdminSchema) 
     def post(self, admin_data):
-        """
-        Endpoint to create a new admin.
-        """
+
         try:
-            # Extract claims from the JWT
             claims = get_jwt()
-            
-            # Ensure that the user has admin privileges
+
             if claims.get("is_admin") != True:
                 return jsonify({
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
 
-            # Proceed with admin creation logic
+
             return AdminServices.createNewAdmin(admin_data)
 
         except Exception as e:
-            # Handle exceptions and return an error response
             return jsonify({"error": str(e)}), 500
 
 
-# Explicitly register the CreateAdmin view in the blueprint
 admin_bp.add_url_rule('/create', view_func=CreateAdmin.as_view('create_admin'))
 
 
 
-# Attendee Login (POST request to authenticate)
+# Attendee Login 
 @admin_bp.route("/admin/login")
 class adminLogin(MethodView):
     @admin_bp.arguments(AdminLoginSchema)
@@ -54,7 +48,7 @@ class adminLogin(MethodView):
 @admin_bp.route("/admin/<int:admin_id>", methods=["GET", "DELETE"])
 class AdminResource(MethodView):
     
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def get(self, admin_id):
         """Retrieve an admin by ID."""
         try:
@@ -64,13 +58,13 @@ class AdminResource(MethodView):
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
 
-            # Retrieve the admin by ID
+
             return AdminServices.getAdminById(admin_id)
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def delete(self, admin_id):
         try:
             claims = get_jwt()
@@ -79,7 +73,7 @@ class AdminResource(MethodView):
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
 
-            # Delete the admin by ID
+
             return AdminServices.delAdminById(admin_id)
 
         except Exception as e:
@@ -87,7 +81,6 @@ class AdminResource(MethodView):
 
 
 #done
-# Admin resource for handling a list of admins (GET all) and creating new admin (POST)
 @admin_bp.route("/admin", methods=["GET", "POST"])
 class AdminListResource(MethodView):
     
@@ -128,26 +121,20 @@ class AdminListResource(MethodView):
 
 #done
 class AdminApproveAuthor(MethodView):
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def post(self, author_id):
         try:
-            # Extract JWT claims to check if the user is an admin
             claims = get_jwt()
             if claims.get("is_admin") != True:
                 return jsonify({
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
-
-            # Call the service method that handles approving the author
             response = AdminServices.approveAuthor(author_id)
-
-            # Return the response as JSON with the appropriate HTTP status code
             return jsonify(response[0]), response[1]
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-# Register the AdminApproveAuthor method view with the blueprint
 admin_bp.add_url_rule('/admin/approve_author/<int:author_id>', view_func=AdminApproveAuthor.as_view('approve_author'))
 
 
@@ -155,31 +142,27 @@ admin_bp.add_url_rule('/admin/approve_author/<int:author_id>', view_func=AdminAp
 #done
 @admin_bp.route("/admin/event", methods=["POST", "DELETE"])
 class CreateEvent(MethodView):
-    @jwt_required()  # Ensure the user is authenticated
-    @admin_bp.arguments(EventSchema)  # Automatically validate incoming JSON data
+    @jwt_required() 
+    @admin_bp.arguments(EventSchema)  
     def post(self, event_data):
-        # Extract JWT claims to check if the user is an admin
         claims = get_jwt()
         if claims.get("is_admin") != True:
             return jsonify({"message": "Access denied: Administrator privileges are required to access this endpoint."}), 403
-
-        # Call the service method to create the event
         return AdminServices.create_event(event_data)
     
     @jwt_required()
     def delete(self):
         try:
-            # Extract JWT claims to check if the user is an admin
+
             claims = get_jwt()
             if claims.get("is_admin") != True:
                 return jsonify({"message": "Access denied: Administrator privileges are required to access this endpoint."}), 403
             
-            # Extract event ID from the request's JSON body
+
             event_id = request.json.get('event_id')
             if not event_id:
-                return jsonify({"message": "Event ID is required."}), 400  # Bad Request
+                return jsonify({"message": "Event ID is required."}), 400  
             
-            # Call the service method to delete the event
             response, status_code = AdminServices.delete_event(event_id)
             return jsonify(response), status_code
         
@@ -191,17 +174,15 @@ class CreateEvent(MethodView):
 #done
 @admin_bp.route("/admin/author/booth", methods=["PUT"])
 class ApproveBoothRequest(MethodView):
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def put(self):
         try:
-            # Extract JWT claims to check if the user is an admin
             claims = get_jwt()
             if claims.get("is_admin") != True:
                 return jsonify({
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
 
-            # Extract the request data
             data = request.json
             author_id = data.get('author_id')
             booth_reference = data.get('booth_reference')
@@ -211,7 +192,6 @@ class ApproveBoothRequest(MethodView):
                     "message": "Both author_id and booth_reference are required."
                 }), 400
 
-            # Call the service function
             return AdminServices.approve_and_assign_booth(author_id, booth_reference)
         
         except Exception as e:
@@ -222,17 +202,15 @@ class ApproveBoothRequest(MethodView):
 #done
 @admin_bp.route("/admin/author", methods=["PUT"])
 class BanAuthor(MethodView):
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required() 
     def put(self):
         try:
-            # Extract JWT claims to check if the user is an admin
             claims = get_jwt()
             if claims.get("is_admin") != True:
                 return jsonify({
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
 
-            # Call the service function to ban the author
             return AdminServices.banAuthor()
 
         except Exception as e:
@@ -242,17 +220,14 @@ class BanAuthor(MethodView):
 #done
 @admin_bp.route("/admin/attendee", methods=["DELETE"])
 class DeleteAttendee(MethodView):
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required() 
     def delete(self):
         try:
-            # Extract JWT claims to check if the user is an admin
             claims = get_jwt()
             if claims.get("is_admin") != True:
                 return jsonify({
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
-
-            # Call the service function to delete an attendee
             return AdminServices.deleteAttendee()
 
         except Exception as e:

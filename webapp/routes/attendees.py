@@ -15,7 +15,7 @@ attendee_bp = Blueprint("Attendees", "attendees", description="Operations on Att
 
 
 
-# Attendee Sign-up (POST request to create a new attendee)
+# Attendee Sign-up 
 @attendee_bp.route("/attendee/signup")
 class AttendeeSignup(MethodView):
     @attendee_bp.arguments(AttendeeSchema)
@@ -25,7 +25,7 @@ class AttendeeSignup(MethodView):
 
 
 
-# Attendee Login (POST request to authenticate)
+# Attendee Login 
 @attendee_bp.route("/attendee/login")
 class AttendeeLogin(MethodView):
     @attendee_bp.arguments(AttendeeLoginSchema)
@@ -34,24 +34,20 @@ class AttendeeLogin(MethodView):
 
 
 #done
-# Add to Favorite Books (POST request to mark a book as favorite)
+# Add to Favorite Books 
 @attendee_bp.route("/attendee/favorite/book")
 class AddFavoriteBook(MethodView):
     
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required() 
     @attendee_bp.arguments(FavoriteBookSchema)
     def post(self, favorite_book_data):
         try:
-            # Retrieve JWT claims
             claims = get_jwt()
-            
-            # Check if the claim has is_admin or is_attendee
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
-                    "message": "Access denied: Administrator or Attendee privileges are required to access this endpoint."
+                    "message": "Access denied: Attendee privileges are required to access this endpoint."
                 }), 403
 
-            # If the user has valid claims, proceed with adding the favorite book
             return AttendeeServices.add_favorite_book(favorite_book_data)
 
         except Exception as e:
@@ -61,21 +57,16 @@ class AddFavoriteBook(MethodView):
 
 @attendee_bp.route("/attendee/favorite/author", methods=["POST"])
 class AddFavoriteAuthor(MethodView):
-    @jwt_required()  # Ensure that JWT is required for this endpoint
+    @jwt_required() 
     @attendee_bp.arguments(FavoriteAuthorSchema)
     def post(self,favorite_author_data):
-        """
-        Endpoint to add a favorite author for the attendee.
-        Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
-        """
         try:
-            claims = get_jwt()  # Get the JWT claims
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
                     "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
-            # If the claim is valid, proceed to add favorite author
             return AttendeeServices.add_favorite_author(favorite_author_data)
 
         except Exception as e:
@@ -83,11 +74,9 @@ class AddFavoriteAuthor(MethodView):
 
 
 
-
-# Attend an Event (POST request to mark attendance)
 @attendee_bp.route("/attendee/event/attend", methods=["POST"])
 class AttendEvent(MethodView):
-    @jwt_required()  # Ensure that JWT is required for this endpoint
+    @jwt_required() 
     @attendee_bp.arguments(EventAttendanceSchema)
     def post(self, attendance_data):
         """
@@ -95,72 +84,59 @@ class AttendEvent(MethodView):
         Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
         """
         try:
-            claims = get_jwt()  # Get the JWT claims
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
                     "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
-            # If the claim is valid, proceed to confirm attendance
             return AttendeeServices.confirmAttendance(attendance_data)
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
 
-# Book Search Route
-@attendee_bp.arguments(CombinedSearchSchema, location="query")
-def get(self, search_data):
-        """
-        Endpoint to search books by title and author. 
-        Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
-        """
-        try:
-            claims = get_jwt()  # Get the JWT claims
-            if not (claims.get("is_admin") or claims.get("is_attendee")):
-                return jsonify({
-                    "message": "Access denied: You must be an attendee to access this resource."
-                }), 403
+@attendee_bp.route("/attendee/search")
+class SearchBook(MethodView):
+    @jwt_required()
+    @attendee_bp.arguments(CombinedSearchSchema, location="query")
+    def get(self, search_data):
+            """
+            Endpoint to search books by title and author. 
+            Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
+            """
+            try:
+                claims = get_jwt()  # Get the JWT claims
+                if not (claims.get("is_admin") or claims.get("is_attendee")):
+                    return jsonify({
+                        "message": "Access denied: You must be an attendee to access this resource."
+                    }), 403
+                result = AttendeeServices.combinedSearch(search_data)
 
-            # Use the service to process the search request
-            result = AttendeeServices.combinedSearch(search_data)
+                if isinstance(result, Response):
+                    return result  
+                return jsonify(result)  
 
-            # Check if the result is a Response object (error or valid response)
-            if isinstance(result, Response):
-                return result  # Return the existing Response object
-
-            # If the result is not a Response, jsonify it before returning
-            return jsonify(result)  # Ensure response is in Flask's JSON format
-
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
     
 
 
 #Book recommendation 
 @attendee_bp.route("/attendee/recommend")
 class RecommendBooks(MethodView):
-    """
-    Endpoint to recommend books for an attendee. 
-    Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
-    """
-    decorators = [jwt_required()]  # Apply decorators to the class
+    decorators = [jwt_required()]  
 
     @attendee_bp.arguments(RecommendationRequestSchema)
     @attendee_bp.response(200, RecommendationResponseSchema)
     def post(self, attendee_data):
-        """
-        Endpoint to recommend books for an attendee. 
-        Only accessible if the user is either an admin or an attendee.
-        """
         try:
-            claims = get_jwt()  # Get the JWT claims
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
-                    "message": "Access denied: You must be either an admin or an attendee to access this resource."
+                    "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
-            # Proceed with the recommendation process
             return RecommendationServices.recommend_books_for_attendee(attendee_data)
 
         except Exception as e:
@@ -170,60 +146,43 @@ class RecommendBooks(MethodView):
 
 @attendee_bp.route("/attendee/event/<int:event_id>", methods=["GET", "POST", "PUT"])
 class EventInfo(MethodView):
-    """
-    Endpoint for event-related actions (Get event info, Post attendance confirmation, and Put feedback).
-    Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
-    """
-
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def get(self, event_id):
-        """
-        Retrieve event information.
-        """
         try:
-            claims = get_jwt()  # Get JWT claims
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
-                    "message": "Access denied: You must be either an admin or an attendee to access this resource."
+                    "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
-            # Proceed with retrieving event info
             return AttendeeServices.getEventInfo(event_id)
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def post(self, event_id):
-        """
-        Confirm attendance for an event.
-        """
         try:
-            claims = get_jwt()  # Get JWT claims
+            claims = get_jwt() 
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
                     "message": "Access denied: You must be either an admin or an attendee to access this resource."
                 }), 403
 
-            # Confirm attendance
             return AttendeeServices.ConfirmAttendence(event_id)
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def put(self, event_id):
-        """
-        Submit feedback for an event.
-        """
         try:
-            claims = get_jwt()  # Get JWT claims
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
-                    "message": "Access denied: You must be either an admin or an attendee to access this resource."
+                    "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
-            # Submit feedback for the event
             return AttendeeServices.giveFeedback(event_id)
 
         except Exception as e:
@@ -233,42 +192,30 @@ class EventInfo(MethodView):
 
 @attendee_bp.route("/attendee/approved-authors-booths", methods=["GET", "POST"])
 class ApprovedAuthorsBooths(MethodView):
-    """
-    Endpoint for getting approved authors' booths information.
-    Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
-    """
-
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def get(self):
-        """
-        Retrieve approved authors' booths.
-        """
         try:
-            claims = get_jwt()  # Get JWT claims
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
-                    "message": "Access denied: You must be either an admin or an attendee to access this resource."
+                    "message": "Access denied: You must be an attendee to access this resource."
                 }), 403
 
-            # Retrieve the list of approved authors' booths
             return AttendeeServices.getAuthorBooths()
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def post(self):
-        """
-        Retrieve author booth by name.
-        """
         try:
-            claims = get_jwt()  # Get JWT claims
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_attendee")):
                 return jsonify({
                     "message": "Access denied: You must be either an admin or an attendee to access this resource."
                 }), 403
 
-            # Retrieve the author booth by name
+
             return AttendeeServices.getAuthorBoothByName()
 
         except Exception as e:

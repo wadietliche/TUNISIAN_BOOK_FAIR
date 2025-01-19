@@ -1,155 +1,190 @@
-/* src/app/landing/landing.component.css */
+/* Apply Poppins font globally */
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Landing Container */
 .landing-container {
-    font-family: Arial, sans-serif;
-    color: #333;
-  }
-  
-  .header {
-    background-color: #4CAF50;
-    color: white;
-    padding: 60px 20px;
-    text-align: center;
-  }
-  
-  .header h1 {
-    margin: 0;
-    font-size: 50px;
-  }
-  
-  .header p {
-    font-size: 20px;
-  }
-  
-  .button-container {
-    margin-top: 20px;
-  }
-  
-  .cta-button {
-    background-color: #fff;
-    color: #4CAF50;
-    padding: 15px 30px;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 5px;
-    margin: 10px;
-    transition: background-color 0.3s ease;
-  }
-  
-  .cta-button:hover {
-    background-color: #45a049;
-    color: white;
-  }
-  
-  .sign-up-btn {
-    background-color: #4CAF50;
-    color: white;
-  }
-  
-  .sign-up-btn:hover {
-    background-color: #45a049;
-  }
-  
-  .login-btn {
-    background-color: #fff;
-    color: #4CAF50;
-    border: 2px solid #4CAF50;
-  }
-  
-  .login-btn:hover {
-    background-color: #f1f1f1;
-  }
-  
-  .features {
-    display: flex;
-    justify-content: center;
-    margin: 50px 0;
-  }
-  
-  .feature-card {
-    background-color: #f9f9f9;
-    padding: 30px;
-    margin: 0 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 250px;
-    text-align: center;
-  }
-  
-  .feature-card h2 {
-    font-size: 22px;
-  }
-  
-  .feature-card p {
-    font-size: 16px;
-  }
-  
-  .footer {
-    background-color: #333;
-    color: white;
-    text-align: center;
-    padding: 20px;
-  }
-  
-  .footer a {
-    color: #f1f1f1;
-    text-decoration: none;
-  }
-  
-  .footer a:hover {
-    text-decoration: underline;
+  min-height: 100vh;
+  background: white;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+}
+
+/* Gradient Shapes */
+.gradient-shape {
+  position: absolute;
+  width: 50vw;
+  height: 100vh;
+  background: linear-gradient(45deg, #6b2fdb, #985bff);
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  opacity: 0.8;
+  z-index: 1;
+}
+
+.gradient-shape.right {
+  right: -25vw;
+  top: -10vh;
+  transform: rotate(45deg);
+}
+
+.gradient-circle {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(45deg, #6b2fdb, #985bff);
+  border-radius: 50%;
+  opacity: 0.6;
+  z-index: 1;
+}
+
+.gradient-circle.top {
+  top: 10%;
+  right: 15%;
+}
+
+.gradient-circle.bottom {
+  bottom: 10%;
+  left: 15%;
+}
+
+/* Content */
+.content-wrapper {
+  position: relative;
+  z-index: 2;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Logo */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 4rem;
+}
+
+.logo {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.logo-square {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #6b2fdb;
+  transform: rotate(45deg);
+}
+
+.logo-triangle {
+  position: absolute;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-left: 15px solid transparent;
+  border-right: 15px solid transparent;
+  border-bottom: 25px solid #985bff;
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #333;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Typography */
+.main-title {
+  font-size: 4rem;
+  font-weight: 900;
+  margin-bottom: 1rem;
+  color: #333;
+  line-height: 1.1;
+  font-family: 'Poppins', sans-serif;
+}
+
+.subtitle {
+  font-size: 1.5rem;
+  color: #666;
+  margin-bottom: 3rem;
+  max-width: 600px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Buttons */
+.button-container {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cta-button {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Poppins', sans-serif;
+}
+
+.sign-up-btn {
+  background: linear-gradient(45deg, #6b2fdb, #985bff);
+  color: white;
+}
+
+.sign-up-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(107, 47, 219, 0.3);
+}
+
+.login-btn {
+  background: white;
+  color: #6b2fdb;
+  border: 2px solid #6b2fdb;
+}
+
+.login-btn:hover {
+  background: rgba(107, 47, 219, 0.1);
+}
+
+/* Footer */
+.footer {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 1rem;
+  color: #666;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-title {
+    font-size: 3rem;
   }
 
-  /* src/app/sign-up/sign-up.component.css */
-.sign-up-container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  .subtitle {
+    font-size: 1.25rem;
   }
-  
-  h2 {
-    text-align: center;
-    margin-bottom: 20px;
+
+  .button-container {
+    flex-direction: column;
   }
-  
-  .form-group {
-    margin-bottom: 15px;
-  }
-  
-  label {
-    font-size: 14px;
-    color: #333;
-    display: block;
-  }
-  
-  .input-control {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
-  }
-  
-  .error-message {
-    color: red;
-    font-size: 12px;
-  }
-  
-  .submit-btn {
-    background-color: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 5px;
+
+  .cta-button {
     width: 100%;
   }
-  
-  .submit-btn:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
+}

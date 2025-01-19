@@ -33,24 +33,20 @@ class AuthorLogin(MethodView):
 # Route to add a new book
 class AddBook(MethodView):
     @author_bp.arguments(BookSchema)
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def post(self, book_data):
-        """Handle the POST request to add a new book."""
         try:
-            claims = get_jwt()  # Get JWT claims
-            # Check if the user is either an admin or an author
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_author")):
                 return jsonify({
                     "message": "Access denied: You must be either an admin or an author to access this resource."
                 }), 403
 
-            # Call the service function to add the book
             return AuthorSercices.addBookByAuthor(book_data)
 
         except Exception as e:
             return jsonify({"message": f"Error occurred: {str(e)}"}), 500
 
-# Registering the blueprint route
 author_bp.add_url_rule("/author/book", view_func=AddBook.as_view('add_book'))
 
 
@@ -60,36 +56,31 @@ author_bp.add_url_rule("/author/book", view_func=AddBook.as_view('add_book'))
 @author_bp.route("/author/event", methods=["GET", "POST"])
 class Event(MethodView):
     
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def get(self):
-        """Retrieve all events."""
         try:
-            claims = get_jwt()  # Get JWT claims
-            # Ensure the user is either an admin or an author
+            claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_author")):
                 return jsonify({
                     "message": "Access denied: You must be either an admin or an author to access this resource."
                 }), 403
 
-            # Call the service to retrieve all events
             return AuthorSercices.get_all_events()
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    @jwt_required()  # Ensure the user is authenticated
-    @author_bp.arguments(ReservationRequestSchema)  # Validate incoming request data
+    @jwt_required()  
+    @author_bp.arguments(ReservationRequestSchema)  
     def post(self, request_data):
         """Handle booth reservation requests."""
         try:
-            claims = get_jwt()  # Get JWT claims
-            # Ensure the user is either an admin or an author
+            claims = get_jwt() 
             if not (claims.get("is_admin") or claims.get("is_author")):
                 return jsonify({
                     "message": "Access denied: You must be either an admin or an author to access this resource."
                 }), 403
 
-            # Call the service to process the booth reservation
             return AuthorSercices.post_booth_request(request_data)
 
         except Exception as e:

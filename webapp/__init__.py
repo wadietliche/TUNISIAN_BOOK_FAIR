@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 from config import Config
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_cors import CORS
 
 
 db = SQLAlchemy()
@@ -11,7 +12,7 @@ jwt=JWTManager()
 
 def create_app():
     app = Flask(__name__)
-
+    CORS(app)  
     app.config["API_TITLE"] = "Tunisian Book Fair API"
     app.config["API_VERSION"] = "v1"
     app.config["OPENAPI_VERSION"] = "3.0.0" 

@@ -1,19 +1,53 @@
-
 <!-- src/app/landing/landing.component.html -->
+
+<!-- Link to Google Fonts (Poppins font) -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+<!-- Main landing container -->
 <div class="landing-container">
-    <header class="header">
-      <h1>Welcome to Tunisian Book Fair</h1>
-      <p>Empowering connections between authors, attendees and books</p>
-      
-      <!-- Sign Up and Login Buttons -->
-      <div class="button-container">
-        <button class="cta-button sign-up-btn" (click)="onSignUpAttendee()">Sign Up as attendee</button>
-        <button class="cta-button sign-up-btn" (click)="onSignUpAuthor()">Sign Up as author </button>
-        <button class="cta-button login-btn" (click)="onLogin()">Login</button>
+  <!-- Gradient shapes and circles -->
+  <div class="gradient-shape right"></div>
+  <div class="gradient-circle top"></div>
+  <div class="gradient-circle bottom"></div>
+
+  <!-- Content wrapper (main content) -->
+  <div class="content-wrapper">
+    <!-- Logo section -->
+    <div class="logo-container">
+      <!-- Simple geometric logo -->
+      <div class="logo">
+        <div class="logo-square"></div>
+        <div class="logo-triangle"></div>
       </div>
+      <!-- Logo text -->
+      <span class="logo-text">TBF</span>
+    </div>
+
+    <!-- Header section -->
+    <header class="header">
+      <h1 class="main-title">Tunisian Book Fair</h1>
+      <p class="subtitle">Empowering connections between authors, attendees, and books</p>
     </header>
-  
-    <footer class="footer">
-      <p>© TUNISIAN-BOOK-FAIR</p>
-    </footer>
+
+    <!-- Button container -->
+    <div class="button-container">
+      <!-- Sign-up button for attendee -->
+      <button class="cta-button sign-up-btn" (click)="onSignUpAttendee()">
+        Sign up as attendee
+      </button>
+      <!-- Sign-up button for author -->
+      <button class="cta-button sign-up-btn" (click)="onSignUpAuthor()">
+        Sign up as author
+      </button>
+      <!-- Login button -->
+      <button class="cta-button login-btn" (click)="onLogin()">
+        Login
+      </button>
+    </div>
   </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>© TUNISIAN-BOOK-FAIR</p>
+  </footer>
+</div>

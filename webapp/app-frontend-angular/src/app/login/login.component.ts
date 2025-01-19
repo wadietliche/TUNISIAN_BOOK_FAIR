@@ -49,7 +49,10 @@ ngOnInit(): void {
       }else{
         this.authService.attendeeLogin(this.username,this.password).subscribe((result)=>{
           if(result.attendee_id){
-            this.router.navigate(['/']);
+            this.router.navigate(['/attendee-page']);
+            console.log(result.tokens)
+            this.authService.saveToken(result.tokens.access);
+            this.authService.saveAttendeeId(result.attendee_id);
           }
         })
       }

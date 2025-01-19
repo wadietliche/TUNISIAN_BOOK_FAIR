@@ -49,11 +49,8 @@ class Book(db.Model):
     isbn = db.Column(db.String(50), unique=True, nullable=False)
     published_year = db.Column(db.Integer)
     publisher = db.Column(db.String(100))
-    
-    # Foreign key linking to Author
     author_id = db.Column(db.Integer, db.ForeignKey('authors.author_id'), nullable=False)
     
-    # Use a unique backref name
     author = db.relationship('Author', backref=db.backref('author_books', lazy=True))  # Changed to 'author_books'
 
 
@@ -74,7 +71,7 @@ class Event(db.Model):
     present_events = db.relationship('PresentEvent', backref='event', lazy=True)
 
 
-# FavoriteBooks Table (Linking Books and Attendees)
+# FavoriteBooks Table 
 class FavoriteBook(db.Model):
     __tablename__ = 'favorite_books'
     book_id = db.Column(db.Integer, db.ForeignKey('books.book_id'), primary_key=True)
@@ -83,7 +80,7 @@ class FavoriteBook(db.Model):
 
 
 
-# FairMap Table (Booth References for Authors)
+# FairMap Table 
 class FairMap(db.Model):
     __tablename__ = 'fair_map'
     booth_reference = db.Column(db.String(50), primary_key=True)
@@ -91,7 +88,7 @@ class FairMap(db.Model):
     status = db.Column(db.String(20), nullable=False, default='pending')  # 'pending', 'approved'
 
 
-# PresentEvent Table (Linking Authors and Events)
+# PresentEvent Table 
 class PresentEvent(db.Model):
     __tablename__ = 'present_event'
     
@@ -108,6 +105,5 @@ class FavoriteAuthor(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey('authors.author_id'), nullable=False)
     attendee_id = db.Column(db.Integer, db.ForeignKey('attendees.attendee_id'), nullable=False)
 
-    # Define the reverse relationship using back_populates
     attendee = db.relationship('Attendee', back_populates='favorite_authors')
-    author = db.relationship('Author', back_populates='favorite_authors')  # Ensure the Author model has a matching back_populates
+    author = db.relationship('Author', back_populates='favorite_authors') 

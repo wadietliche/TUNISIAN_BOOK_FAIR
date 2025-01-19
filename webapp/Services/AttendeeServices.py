@@ -84,30 +84,24 @@ def fetch_author_from_google_books(author_name):
     if response.status_code == 200:
         data = response.json()
         if data.get("items"):
-            return data["items"][0]["volumeInfo"]["authors"][0]  # First author
+            return data["items"][0]["volumeInfo"]["authors"][0] 
     return None
 
 
 
-def attendeeSignUp(attendee_data):  # Add the attendee_data parameter
+def attendeeSignUp(attendee_data):  
     try:
-        # Check if the attendee_name already exists in the database
         existing_attendee = Attendee.query.filter_by(attendee_name=attendee_data['attendee_name']).first()
         if existing_attendee:
             abort(400, message="Attendee with this name already exists.")
         
-        # Hash the password before saving
         attendee_data['password'] = generate_password_hash(attendee_data['password'])
         
-        # Create a new Attendee object
         attendee = Attendee(**attendee_data)
         
         try:
-            # Add the new attendee to the database
             db.session.add(attendee)
             db.session.commit()
-            
-            # Return success message along with attendee data
             return jsonify({
                 "message": "Sign-up successful. Welcome to the platform!",
                 "attendee": AttendeeSchema().dump(attendee)
@@ -119,14 +113,12 @@ def attendeeSignUp(attendee_data):  # Add the attendee_data parameter
             db.session.rollback()
             abort(500, message="An error occurred during sign-up.")
     except ValidationError as err:
-        abort(400, message=err.messages)  # Return validation errors if any
+        abort(400, message=err.messages)
 
 
 
 def attendeeLogin(login_data):
     try:
-        # Validate input data using the schema
-        # You no longer need to reload the data here since it's passed as a parameter
         attendee = Attendee.query.filter_by(attendee_name=login_data['attendee_name']).first()
         
         if attendee and check_password_hash(attendee.password, login_data['password']):
@@ -150,34 +142,25 @@ def attendeeLogin(login_data):
 
 def add_favorite_book(favorite_book_data):
     try:
-        # Extract attendee ID and book title from the input
         attendee_id = favorite_book_data['attendee_id']
         book_title = favorite_book_data['book_title']
-
-        # Check if the book already exists in the database
         book = Book.query.filter_by(title=book_title).first()
 
         if not book:
-            # If the book doesn't exist, fetch book details from Google Books API
             fetched_book_details = fetch_book_from_google_books(book_title)
 
             if not fetched_book_details:
                 return {"message": "Book not found in Google Books API."}, 404
             if not fetched_book_details["isbn"]:
                 return {"message": "ISBN not found for this book in Google Books API."}, 404
-
-            # Extract book details from the fetched data
             fetched_title = fetched_book_details['title']
             fetched_isbn = fetched_book_details['isbn']
             fetched_published_year = fetched_book_details.get('published_year')
             fetched_publisher = fetched_book_details.get('publisher')
             fetched_author_name = fetched_book_details['author_name']
-
-            # Check if the author exists in the database
             author = Author.query.filter_by(author_name=fetched_author_name).first()
 
             if not author:
-                # Add the author to the database if they don't exist
                 random_password = generate_random_password()
                 print(f"Generated password for author '{fetched_author_name}': {random_password}")
 
@@ -199,7 +182,6 @@ def add_favorite_book(favorite_book_data):
                 db.session.commit()
                 print(f"New author created: {author}")
 
-            # Add the book to the database
             book = Book(
                 title=fetched_title,
                 isbn=fetched_isbn,
@@ -210,14 +192,11 @@ def add_favorite_book(favorite_book_data):
             db.session.add(book)
             db.session.commit()
             print(f"New book added: {book}")
-
-        # Check if the book is already in the attendee's favorites
         existing_favorite = FavoriteBook.query.filter_by(book_id=book.book_id, attendee_id=attendee_id).first()
 
         if existing_favorite:
             return {"message": "This book is already in your favorites."}, 400
 
-        # Add the book to the favorite books table
         favorite_book = FavoriteBook(book_id=book.book_id, attendee_id=attendee_id)
         db.session.add(favorite_book)
         db.session.commit()
@@ -241,16 +220,11 @@ def add_favorite_book(favorite_book_data):
 from flask import current_app
 
 def combinedSearch(query, max_results=5):
-    # Prepare the query string to search in title, author, or publisher
-    search_url = f'https://www.googleapis.com/books/v1/volumes?q={query}&maxResults={max_results}&key=AIzaSyCcdNKnm3UL-UK2ykcMoHMvwCmoyhHCkoo'
-
-    # Perform the request to the Google Books API
+    search_url = f'https://www.googleapis.com/books/v1/volumes?q={query}&maxResults={max_results}&key=AIzaSyCcdNKnm3UL-'
     try:
         response = requests.get(search_url)
-        response.raise_for_status()  # Will raise an exception for 4xx or 5xx responses
+        response.raise_for_status() 
         data = response.json()
-
-        # If the response contains items (books)
         if 'items' in data:
             books = []
             for item in data['items']:
@@ -265,12 +239,11 @@ def combinedSearch(query, max_results=5):
                     'imageLinks': book_info.get('imageLinks', {}).get('thumbnail', 'N/A'),
                     'previewLink': book_info.get('infoLink', 'N/A')
                 })
-            return jsonify(books)  # Return the list of books in JSON format
+            return jsonify(books) 
         else:
             return jsonify({"message": "No books found matching the query."})
 
     except requests.exceptions.RequestException as e:
-        # Handle any errors in the request (e.g., network issues)
         return jsonify({"error": str(e)})
 
 
@@ -279,35 +252,28 @@ def combinedSearch(query, max_results=5):
 
 def add_favorite_author(favorite_author_data):
     try:
-        # Extract attendee ID and author name from the input
         attendee_id = favorite_author_data['attendee_id']
-        author_name = favorite_author_data['author_name'].strip()  # Strip spaces
-
-        # Make author lookup case-insensitive
+        author_name = favorite_author_data['author_name'].strip()
         author = Author.query.filter(Author.author_name.ilike(author_name)).first()
 
         if not author:
-            # If the author doesn't exist, fetch author details from Google Books API
+
             fetched_author_name = fetch_author_from_google_books(author_name)
 
             if not fetched_author_name:
                 return {"message": "Author not found in Google Books API."}, 404
 
-            # Generate a random password for the new author entry
+
             random_password = generate_random_password()
             print(f"Generated password for author '{fetched_author_name}': {random_password}")
 
-            # Generate a unique username (avoid duplicating usernames)
             base_username = fetched_author_name.replace(" ", "_").lower()
             username = base_username
             counter = 1
-
-            # Check if the username already exists in the database
             while Author.query.filter_by(username=username).first():
                 username = f"{base_username}_{counter}"
                 counter += 1
 
-            # Add the new author to the database
             author = Author(
                 author_name=fetched_author_name,
                 username=username,
@@ -315,31 +281,23 @@ def add_favorite_author(favorite_author_data):
                 approved=False
             )
             db.session.add(author)
-            db.session.commit()  # Save the new author to the database
+            db.session.commit()  
             print(f"New author created: {author}")
 
-        # Check if the author is already in the attendee's favorites
         existing_favorite = FavoriteAuthor.query.filter_by(author_id=author.author_id, attendee_id=attendee_id).first()
 
         if existing_favorite:
-            # If the author is already in the favorite list, return a message
             return {"message": f"The author '{author.author_name}' is already in your favorites."}, 400
-
-        # Create a new favorite author entry if the author is not already in the favorites
         favorite_author = FavoriteAuthor(author_id=author.author_id, attendee_id=attendee_id)
         db.session.add(favorite_author)
         db.session.commit()
-
         print(f"Successfully added author '{author.author_name}' to favorites.")
         return {"message": "Author added to favorites successfully."}, 201
-
     except ValidationError as ve:
         return {"message": "Invalid data.", "errors": ve.messages}, 422
-
     except SQLAlchemyError as se:
-        db.session.rollback()  # Rollback on any database error
+        db.session.rollback() 
         return {"message": f"Database error: {str(se)}"}, 500
-
     except Exception as e:
         return {"message": f"Unexpected error: {str(e)}"}, 500
 
@@ -359,7 +317,6 @@ def checkAuthorAttendence(author_id):
 
 def getEventInfo(event_id):
         try:
-            # Fetch the specific event by ID
             event = Event.query.filter_by(event_id=event_id).first()
 
             if not event:
@@ -382,7 +339,6 @@ def getEventInfo(event_id):
 
 def getAuthorBooths():
         try:
-            # Fetch all authors with approved booths
             approved_booths = (
                 FairMap.query
                 .join(Author, FairMap.author_id == Author.author_id)
@@ -393,8 +349,6 @@ def getAuthorBooths():
 
             if not approved_booths:
                 return jsonify({"message": "No approved booths found."}), 404
-
-            # Prepare the response data
             data = [
                 {
                     "author_name": booth.author_name,
@@ -412,7 +366,6 @@ def getAuthorBooths():
 
 def getAuthorBoothByName():
         try:
-            # Extract the request data
             data = request.json
             author_name = data.get('author_name')
 
@@ -420,24 +373,18 @@ def getAuthorBoothByName():
                 return jsonify({
                     "message": "author_name is required."
                 }), 400
-
-            # Fetch the author by name and join with FairMap to get booth details
             author = Author.query.filter_by(author_name=author_name).first()
 
             if not author:
                 return jsonify({
                     "message": f"No author found with the name {author_name}."
                 }), 404
-
-            # Get the FairMap of the author, if available
             fair_map = FairMap.query.filter_by(author_id=author.author_id).first()
 
             if not fair_map:
                 return jsonify({
                     "message": f"No booth found for author {author_name}."
                 }), 404
-
-            # Display the booth reference if approved, otherwise display the author's name
             if fair_map.status == 'approved':
                 return jsonify({
                     "author_name": author.author_name,
@@ -454,37 +401,26 @@ def getAuthorBoothByName():
         
 
 
-def post(self, event_id):  # `event_id` is now taken from the URL
+def post(self, event_id):
         try:
-            # Extract the request data
             data = request.json
             attendee_id = data.get('attendee_id')
-            feedback = data.get('feedback')  # Optional feedback field
-
-            # Validate the inputs
+            feedback = data.get('feedback')
             if not attendee_id:
                 return jsonify({"message": "attendee_id is required."}), 400
-
-            # Check if the attendee exists
             attendee = Attendee.query.get(attendee_id)
             if not attendee:
                 return jsonify({"message": "Attendee not found."}), 404
-
-            # Check if the event exists
             event = Event.query.get(event_id)
             if not event:
                 return jsonify({"message": "Event not found."}), 404
-
-            # Check if the attendee has already confirmed attendance for this event
             existing_attendance = PresentEvent.query.filter_by(author_id=attendee_id, event_id=event_id).first()
             if existing_attendance:
                 return jsonify({"message": "Attendance already confirmed."}), 400
-
-            # Create a new PresentEvent entry to confirm the attendance
             new_attendance = PresentEvent(
                 author_id=attendee_id,
                 event_id=event_id,
-                feedback=feedback  # Store the feedback if provided
+                feedback=feedback  
             )
             db.session.add(new_attendance)
             db.session.commit()
@@ -503,39 +439,27 @@ def post(self, event_id):  # `event_id` is now taken from the URL
 
 def ConfirmAttendence(event_id):
     try:
-            # Extract the request data (attendee_id passed in the JSON body)
             data = request.json
-            attendee_id = data.get('attendee_id')  # Expecting attendee_id in the JSON body
-            feedback = data.get('feedback')  # Optional feedback field
-
-            # Validate the input
+            attendee_id = data.get('attendee_id') 
+            feedback = data.get('feedback') 
             if not attendee_id:
                 return jsonify({"message": "attendee_id is required."}), 400
-
-            # Check if the attendee exists
             attendee = Attendee.query.get(attendee_id)
             if not attendee:
                 return jsonify({"message": "Attendee not found."}), 404
-
-            # Check if the event exists
             event = Event.query.get(event_id)
             if not event:
                 return jsonify({"message": "Event not found."}), 404
-
-            # Check if the attendee has already confirmed attendance for this event
             existing_attendance = PresentEvent.query.filter_by(author_id=attendee_id, event_id=event_id).first()
             if existing_attendance:
                 return jsonify({"message": "Attendance already confirmed."}), 400
-
-            # Create a new PresentEvent entry to confirm the attendance
             new_attendance = PresentEvent(
                 author_id=attendee_id,
                 event_id=event_id,
-                feedback=feedback  # Store the feedback if provided
+                feedback=feedback  
             )
             db.session.add(new_attendance)
             db.session.commit()
-
             return jsonify({
                 "message": "Attendance confirmed successfully.",
                 "attendee_id": attendee_id,
@@ -550,7 +474,6 @@ def ConfirmAttendence(event_id):
 
 def giveFeedback(event_id):
     try:
-            # Extract the request data
             data = request.json
             attendee_id = data.get('attendee_id')
             feedback = data.get('feedback')
@@ -559,16 +482,12 @@ def giveFeedback(event_id):
                 return jsonify({
                     "message": "Both attendee_id and feedback are required."
                 }), 400
-
-            # Check if the attendee is attending the event
             present_event = PresentEvent.query.filter_by(author_id=attendee_id, event_id=event_id).first()
 
             if not present_event:
                 return jsonify({
                     "message": "No attendance record found for this attendee at this event."
                 }), 404
-
-            # Update the feedback
             present_event.feedback = feedback
             db.session.commit()
 

@@ -117,7 +117,6 @@ def _get_favorite_book(attendee_id: int) -> Optional[Dict]:
 
 
 def recommend_books_for_attendee(attendee_data: dict) -> Dict:
-    """Recommend books based on the attendee's favorite book."""
     logger.info(f"Processing recommendation for attendee: {attendee_data}")
 
     try:

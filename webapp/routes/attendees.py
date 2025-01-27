@@ -79,10 +79,6 @@ class AttendEvent(MethodView):
     @jwt_required() 
     @attendee_bp.arguments(EventAttendanceSchema)
     def post(self, attendance_data):
-        """
-        Endpoint to confirm attendance at an event.
-        Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
-        """
         try:
             claims = get_jwt()  
             if not (claims.get("is_admin") or claims.get("is_attendee")):
@@ -101,10 +97,6 @@ class SearchBook(MethodView):
     @jwt_required()
     @attendee_bp.arguments(CombinedSearchSchema, location="query")
     def get(self, search_data):
-            """
-            Endpoint to search books by title and author. 
-            Only accessible if the user has is_admin=True or is_attendee=True in the JWT claims.
-            """
             try:
                 claims = get_jwt()  # Get the JWT claims
                 if not (claims.get("is_admin") or claims.get("is_attendee")):

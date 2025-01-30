@@ -3,9 +3,10 @@ from flask import jsonify,request
 from flask_smorest import Blueprint
 from webapp.models import Admin, Author
 from webapp.schemas import AdminSchema,AdminLoginSchema,AuthorApprovalSchema,EventSchema
-from webapp.Services import AdminServices
+from webapp.Services import AdminServices, AnalyticsServices
 from flask_jwt_extended import jwt_required,get_jwt
 from marshmallow import ValidationError
+from textblob import TextBlob
 
 
 
@@ -84,7 +85,7 @@ class AdminResource(MethodView):
 @admin_bp.route("/admin", methods=["GET", "POST"])
 class AdminListResource(MethodView):
     
-    @jwt_required()  # Ensure the user is authenticated
+    @jwt_required()  
     def get(self):
         """Retrieve all admins."""
         try:
@@ -94,15 +95,14 @@ class AdminListResource(MethodView):
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
 
-            # Retrieve and return all admins
             return AdminServices.returnAllAdmins()
 
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    @jwt_required()  # Ensure the user is authenticated
-    @admin_bp.arguments(AdminSchema)  # Automatically validate incoming JSON data
-    @admin_bp.response(201, AdminSchema)  # Serialize and return the Admin object after it's created
+    @jwt_required()  
+    @admin_bp.arguments(AdminSchema)  
+    @admin_bp.response(201, AdminSchema)  
     def post(self, admin_data):
         try:
             claims = get_jwt()
@@ -111,7 +111,6 @@ class AdminListResource(MethodView):
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
 
-            # Create a new admin
             return AdminServices.createNewAdmin(admin_data)
 
         except Exception as e:
@@ -276,5 +275,84 @@ class Managesers(MethodView):
                     "message": "Access denied: Administrator privileges are required to access this endpoint."
                 }), 403
             return AdminServices.get_all_authors()
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+@admin_bp.route("/admin/analytics/users", methods=["GET"])
+class userscount(MethodView):
+    @jwt_required()
+    def get(self):
+        try: 
+            claims = get_jwt()
+            if not claims.get("is_admin"):
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+            return AnalyticsServices.get_user_counts()
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        
+
+
+@admin_bp.route("/admin/analytics/books", methods=["GET"])
+class userscount(MethodView):
+    @jwt_required()
+    def get(self):
+        try: 
+            claims = get_jwt()
+            if not claims.get("is_admin"):
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+            return AnalyticsServices.get_top_books()
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        
+
+
+@admin_bp.route("/admin/analytics/event", methods=["GET"])
+class userscount(MethodView):
+    @jwt_required()
+    def get(self):
+        try: 
+            claims = get_jwt()
+            if not claims.get("is_admin"):
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+            return AnalyticsServices.get_event_analytics()
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        
+
+
+@admin_bp.route("/admin/analytics/author", methods=["GET"])
+class userscount(MethodView):
+    @jwt_required()
+    def get(self):
+        try: 
+            claims = get_jwt()
+            if not claims.get("is_admin"):
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+            return AnalyticsServices.get_books_by_author()
+        except Exception as e:
+            return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+
+@admin_bp.route("/admin/analytics/feedback", methods=["GET"])
+class userscount(MethodView):
+    @jwt_required()
+    def get(self):
+        try: 
+            claims = get_jwt()
+            if not claims.get("is_admin"):
+                return jsonify({
+                    "message": "Access denied: Administrator privileges are required to access this endpoint."
+                }), 403
+            return AnalyticsServices.get_feedback_analytics()
         except Exception as e:
             return jsonify({"error": f"An error occurred: {str(e)}"}), 500

@@ -143,3 +143,10 @@ class FairMapSchema2(Schema):
 class ReservationRequestSchema(Schema): 
     author_id = fields.Int(required=True)
     event_id = fields.Int(required=False)
+
+
+from marshmallow import Schema, fields
+
+class ChatbotSchema(Schema):
+    message = fields.String(required=True, description="The message from the user to the chatbot.")
+    context = fields.String(missing="", description="Optional conversation context.")

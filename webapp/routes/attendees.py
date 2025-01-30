@@ -3,12 +3,12 @@ from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from webapp import db
 from webapp.models import Attendee, FavoriteBook, FavoriteAuthor, PresentEvent, Event, Author, FairMap
-from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,CombinedSearchSchema,RecommendationResponseSchema,RecommendationRequestSchema
+from webapp.schemas import AttendeeSchema, AttendeeLoginSchema, ChatbotSchema, FavoriteBookSchema, FavoriteAuthorSchema, EventAttendanceSchema,CombinedSearchSchema,RecommendationResponseSchema,RecommendationRequestSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 from flask import jsonify,Response,request
-from webapp.Services import AttendeeServices, RecommendationServices
-from flask_jwt_extended import jwt_required, get_jwt
+from webapp.Services import AttendeeServices, RecommendationServices, ChatbotServices
+from flask_jwt_extended import jwt_required, get_jwt,get_jwt_identity
 
 
 attendee_bp = Blueprint("Attendees", "attendees", description="Operations on Attendees")
@@ -214,4 +214,31 @@ class ApprovedAuthorsBooths(MethodView):
             return jsonify({"error": str(e)}), 500
     
     
-    
+
+@attendee_bp.route("/attendee/chatbot", methods=["POST"])
+class Chatbot(MethodView):
+    @jwt_required()
+    @attendee_bp.arguments(ChatbotSchema)  # Validate input using a schema
+    def post(self, chatbot_data):
+        try:
+            # Check user permissions
+            claims = get_jwt()
+            if not (claims.get("is_admin") or claims.get("is_attendee")):
+                return jsonify({
+                    "message": "Access denied: You must be an attendee to access this resource."
+                }), 403
+
+            # Extract the user's message and context
+            user_input = chatbot_data.get("message")
+            context = chatbot_data.get("context", "")
+            attendee_id = int(get_jwt_identity())
+
+            if not user_input:
+                return jsonify({"error": "No message provided"}), 400
+
+            # Call the service layer to generate a response
+            response = ChatbotServices.generate_chatbot_response(user_input, context, attendee_id)
+            return jsonify({"response": response})
+
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500

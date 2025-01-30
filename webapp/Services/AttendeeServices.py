@@ -126,8 +126,9 @@ def attendeeLogin(login_data):
                 "is_attendee": True,
                 "attendee_id": attendee.attendee_id
             }
-            access_token= create_access_token(identity=attendee.attendee_name,additional_claims=additional_claims,expires_delta=timedelta(minutes=15))
-            refresh_token=create_refresh_token(identity=attendee.attendee_name)
+            access_token = create_access_token(identity=str(attendee.attendee_id), additional_claims=additional_claims, expires_delta=timedelta(minutes=15))
+            refresh_token = create_refresh_token(identity=str(attendee.attendee_id))
+
             
             return jsonify({"message": "Login successful", 
                             "attendee_id": attendee.attendee_id,
@@ -192,6 +193,8 @@ def add_favorite_book(favorite_book_data):
             db.session.add(book)
             db.session.commit()
             print(f"New book added: {book}")
+        
+        # Check for existing favorite
         existing_favorite = FavoriteBook.query.filter_by(book_id=book.book_id, attendee_id=attendee_id).first()
 
         if existing_favorite:
@@ -208,11 +211,17 @@ def add_favorite_book(favorite_book_data):
         return {"message": "Invalid data.", "errors": ve.messages}, 422
 
     except SQLAlchemyError as se:
+        # Rollback in case of an error
         db.session.rollback()
+
+        # Handle IntegrityError specifically
+        if 'UNIQUE constraint failed' in str(se):
+            return {"message": "This book already exists in the database based on its ISBN."}, 400
         return {"message": f"Database error: {str(se)}"}, 500
 
     except Exception as e:
         return {"message": f"Unexpected error: {str(e)}"}, 500
+
 
 
 
